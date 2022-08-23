@@ -1003,3 +1003,22 @@ ORDER BY TO_CHAR(HIREDATE, 'YYYY-MM');
 1981-12	2
 1987-07	2
 */
+
+SELECT T1.입사년월, T1.인원수
+FROM
+(
+    SELECT TO_CHAR(HIREDATE, 'YYYY-MM') "입사년월"
+         , COUNT(*) "인원수"
+    FROM EMP
+    GROUP BY TO_CHAR(HIREDATE, 'YYYY-MM')
+) T1
+WHERE T1.인원수 = (SELECT MAX(T2.인원수)
+                   FROM
+                   (
+                        SELECT TO_CHAR(HIREDATE, 'YYYY-MM') "입사년월"
+                             , COUNT(*) "인원수"
+                        FROM EMP
+                        GROUP BY TO_CHAR(HIREDATE, 'YYYY-MM')
+                   ) T2
+                  )
+ORDER BY 1;

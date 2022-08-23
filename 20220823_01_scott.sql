@@ -1,0 +1,284 @@
+SELECT USER
+FROM DUAL;
+--==>> SCOTT
+
+
+-- ○ TBL_EMP 테이블에서 급여가 가장 많은 사원의
+--    사원번호, 사원명, 직종명, 급여 항목을 조회하는 쿼리문을 구성한다
+
+-- 급여를 가장 많이 받는 사원의 급여
+SELECT MAX(SAL)
+FROM TBL_EMP;
+--==>> 5000
+
+SELECT EMPNO, ENAME, JOB, SAL
+FROM TBL_EMP
+WHERE 급여가 가장 많은 사원;
+
+SELECT EMPNO, ENAME, JOB, SAL
+FROM TBL_EMP
+WHERE SAL = 급여가 가장 많은 사원;
+
+SELECT EMPNO, ENAME, JOB, SAL
+FROM TBL_EMP
+WHERE SAL = (SELECT MAX(SAL)
+            FROM TBL_EMP);
+--==>> 7839	KING	PRESIDENT	5000
+
+
+-- "=ANY"
+
+-- "=ALL"
+
+SELECT SAL
+FROM TBL_EMP;
+--==>>
+/*
+800
+1600
+1250
+2975
+1250
+2850
+2450
+3000
+5000
+1500
+1100
+950
+3000
+1300
+1500
+2000
+1700
+2500
+1000
+*/
+
+SELECT EMPNO, ENAME, JOB, SAL
+FROM TBL_EMP
+WHERE SAL = ANY(800, 1600, 1250, 2975, 1250, 2850
+                , 2450, 3000, 5000, 1500, 1100, 950
+                , 3000, 1300, 1500, 2000, 1700, 2500, 1000);
+
+SELECT EMPNO, ENAME, JOB, SAL
+FROM TBL_EMP
+WHERE SAL >= ANY(800, 1600, 1250, 2975, 1250, 2850
+                , 2450, 3000, 5000, 1500, 1100, 950
+                , 3000, 1300, 1500, 2000, 1700, 2500, 1000);
+--==>> ANY 의 경우 위의 구문이나 아래나 똑같다
+/*
+7369	SMITH	800
+7499	ALLEN	1600
+7521	WARD	1250
+7566	JONES	2975
+7654	MARTIN	1250
+7698	BLAKE	2850
+7782	CLARK	2450
+7788	SCOTT	3000
+7839	KING	5000
+7844	TURNER	1500
+7876	ADAMS	1100
+7900	JAMES	950
+7902	FORD	3000
+7934	MILLER	1300
+8001	김태민	1500
+8002	조현하	2000
+8003	김보경	1700
+8004	유동현	2500
+8005	장현성	1000
+*/
+
+SELECT EMPNO, ENAME, JOB, SAL
+FROM TBL_EMP
+WHERE SAL >= ALL(800, 1600, 1250, 2975, 1250, 2850
+                , 2450, 3000, 5000, 1500, 1100, 950
+                , 3000, 1300, 1500, 2000, 1700, 2500, 1000);
+--==>> 7839	KING	5000
+
+
+SELECT EMPNO, ENAME, JOB, SAL
+FROM TBL_EMP
+WHERE SAL >= ALL(SELECT SAL
+                 FROM TBL_EMP);
+--==>> 7839	KING	5000
+
+
+--○ TBL_EMP 테이블에서 20번 부서에 근무하는 사원들 중
+--   급여가 가장 많은 사원의
+--   사원번호, 사원명, 직종명, 급여 항목을 조회하는 쿼리문을 구성
+
+SELECT EMPNO, ENAME, JOB, SAL
+FROM TBL_EMP
+WHERE 20번 부서에 근무하는 사원들 중
+  AND 급여가 가장 많은 사원;
+  
+SELECT EMPNO, ENAME, JOB, SAL
+FROM TBL_EMP
+WHERE DEPTNO = 20
+  AND SAL = 급여가 가장 많은 사원;
+
+-- 방법 1
+SELECT EMPNO, ENAME, JOB, SAL, DEPTNO
+FROM TBL_EMP
+WHERE DEPTNO = 20
+  AND SAL >= ALL(SELECT SAL
+                  FROM TBL_EMP
+                  WHERE DEPTNO = 20);
+
+-- 방법 2
+SELECT EMPNO, ENAME, JOB, SAL, DEPTNO
+FROM TBL_EMP
+WHERE DEPTNO = 20
+GROUP BY EMPNO, ENAME, JOB, SAL, DEPTNO
+HAVING SAL >= ALL(SELECT SAL
+                  FROM TBL_EMP
+                  WHERE DEPTNO = 20);
+
+-- 방법 3         
+SELECT EMPNO, ENAME, JOB, SAL, DEPTNO
+FROM TBL_EMP 
+WHERE DEPTNO = 20 
+GROUP BY EMPNO, ENAME, JOB, SAL, DEPTNO
+HAVING SAL = (SELECT MAX(SAL) 
+                FROM TBL_EMP 
+                WHERE DEPTNO = 20);
+--==>>
+/*
+7902	FORD	ANALYST	3000	20
+7788	SCOTT	ANALYST	3000	20
+*/
+
+
+--○ TBL_EMP 테이블에서 수당(커미션, COMM)이 가장 많은 사원의
+--   사원번호, 사원명, 부서번호, 직종명, 커미션 항목을 조회한다
+SELECT 사원번호, 사원명, 부서번호, 직종명, 커미션
+FROM TBL_EMP
+WHERE 수당(커미션, COMM)이 가장 많은 사원;
+
+SELECT EMPNO, ENAME, DEPTNO, JOB, COMM
+FROM TBL_EMP
+WHERE COMM = 수당(커미션, COMM)이 가장 많은 사원;
+
+-- 방법 1
+SELECT EMPNO, ENAME, DEPTNO, JOB, COMM
+FROM TBL_EMP
+WHERE COMM >= ALL(SELECT NVL(COMM, 0)
+                  FROM TBL_EMP);
+--==>> 7654	MARTIN	30	SALESMAN	1400
+--     "=ALL" 을 쓸 땐 NULL값을 처리 해줘야 한다
+
+-- 방법 2
+SELECT EMPNO, ENAME, DEPTNO, JOB, COMM
+FROM TBL_EMP
+WHERE COMM = (SELECT MAX(COMM)
+              FROM TBL_EMP);
+--==>> 7654	MARTIN	30	SALESMAN	1400
+--     MAX() 는 NULL값을 제외하고 결과값을 출력함
+
+-- 방법 3
+SELECT EMPNO, ENAME, DEPTNO, JOB, COMM
+FROM TBL_EMP
+WHERE COMM >= ALL(SELECT COMM
+                  FROM TBL_EMP
+                  WHERE COMM IS NOT NULL);
+--==>> 7654	MARTIN	30	SALESMAN	1400
+
+
+--○ DISTINCT() 중복 행(레코드)을 제거하는 함수
+SELECT JOB
+FROM TBL_EMP;
+
+SELECT DISTINCT(JOB)
+FROM TBL_EMP;
+
+-- TBL_EMP 테이블에서 관리자로 등록된 사원의
+-- 사원번호, 사원명, 직종명을 조회
+SELECT *
+FROM TBL_EMP;
+
+SELECT 사원번호, 사원명, 직종명
+FROM TBL_EMP
+WHERE 관리자로 등록된 사원;
+
+SELECT 사원번호, 사원명, 직종명
+FROM TBL_EMP
+WHERE 사원번호 = (관리자(MGR)로 등록된 사원);
+
+SELECT EMPNO, ENAME, JOB
+FROM TBL_EMP
+WHERE EMPNO IN (7902, 7698, 7698, 7839, 7698, 7839, 7839, 7566, null
+                , 7698, 7788, 7698, 7566, 7782, 7566, 7566, 7698, 7698, 7698);
+
+-- 방법 1                
+SELECT EMPNO, ENAME, JOB
+FROM TBL_EMP
+WHERE EMPNO IN (SELECT MGR
+                FROM TBL_EMP);
+
+-- 방법 2
+SELECT EMPNO, ENAME, JOB
+FROM TBL_EMP
+WHERE EMPNO IN (SELECT DISTINCT(MGR)
+                FROM TBL_EMP);
+--==>> 방법 1 보다 리소스 소모가 적다
+/*
+7839	KING	PRESIDENT
+7782	CLARK	MANAGER
+7788	SCOTT	ANALYST
+7566	JONES	MANAGER
+7698	BLAKE	MANAGER
+7902	FORD	ANALYST
+*/
+
+-- 방법 3
+SELECT T1.EMPNO, T1.ENAME, T1.JOB
+FROM TBL_EMP T1, TBL_EMP T2
+WHERE T1.EMPNO = T2.MGR
+GROUP BY T1.EMPNO, T1.ENAME, T1.JOB;
+
+-- 방법 4
+SELECT DISTINCT T1.EMPNO, T1.ENAME, T1.JOB
+FROM TBL_EMP T1, TBL_EMP T2
+WHERE T1.EMPNO = T2.MGR;
+--==>>
+/*
+7839	KING	PRESIDENT
+7782	CLARK	MANAGER
+7788	SCOTT	ANALYST
+7566	JONES	MANAGER
+7698	BLAKE	MANAGER
+7902	FORD	ANALYST
+*/
+
+--------------------------------------------------------------------------------
+SELECT *
+FROM TBL_SAWON;
+
+/*
+--○ TBL_SAWON 테이블 백업(데이터 위주)
+--   → 각 테이블 간의 관계나 제약조건 등은 제외한 상태
+CREATE TABLE TBL_SAWONBACKUP
+AS
+SELECT *
+FROM TBL_SAWON;
+--==>> 
+-- TBL_SAWON 테이블의 데이터들만 백업을 수행
+-- 즉, 다른 이름의 테이블 형태로 저장해 둔 상황
+
+--○ 데이터 수정
+UPDATE TBL_SAWON
+SET SANAME = '똘똘이'
+WHERE SANO = 1005;
+--==>> 실수로 모든 사원의 이름을 똘똘이로 바꾼상태
+--     이럴 때 어떻게 원상복구 시킬까?
+
+UPDATE TBL_SAWON
+SET SANAME = (SELECT SANAME
+              FROM TBL_SAWONBACKUP
+              WHERE SANO = TBL_SAWON.SANO)
+WHERE SANO = '똘똘이';
+-- 백업된 데이터가 있다면, 이렇게 원상복구 가능
+*/
+
+
