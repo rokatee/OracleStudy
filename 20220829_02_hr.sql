@@ -949,7 +949,9 @@ ADD CONSTRAINT EMP1_DEPT_FK FOREIGN KEY(DEPARTMENT_ID)
                  REFERENCES DEPARTMENTS1(DEPARTMENT_ID);
 --==>> Table EMPLOYEES1이(가) 변경되었습니다.
 
+
 -- FK 제약조건 추가
+-- ※ 해당 제약조건은 상호 참조관계 제약조건이므로, 모든 데이터를 넣은 후 생성해주어야 한다
 ALTER TABLE DEPARTMENTS1
 ADD CONSTRAINT DEPT1_MGR_FK FOREIGN KEY(MANAGER_ID)
                  REFERENCES EMPLOYEES1(EMPLOYEE_ID);
@@ -1034,15 +1036,111 @@ ADD CONSTRAINT JHIST1_DEPT_FK FOREIGN KEY(DEPARTMENT_ID)
 --==>> Table JOB_HISTORY1이(가) 변경되었습니다.
 
 
+--------------------------------------------------------------------------------
+-- ▼ 각 테이블 COMMENTS 구성 --------------------------------------------------
+SELECT *
+FROM USER_TAB_COMMENTS;
+
+SELECT *
+FROM USER_COL_COMMENTS;
+
+-- JOBS1 COMMENTS
+COMMENT ON COLUMN JOBS1.JOB_ID IS 'Primary key of jobs table.';
+COMMENT ON COLUMN JOBS1.JOB_TITLE IS 'A not null column that shows job title, e.g. AD_VP, FI_ACCOUNTANT';
+COMMENT ON COLUMN JOBS1.MIN_SALARY IS 'Minimum salary for a job title.';
+COMMENT ON COLUMN JOBS1.MAX_SALARY IS 'Maximum salary for a job title';
+COMMENT ON TABLE JOBS1 IS 'jobs table with job titles and salary ranges. Contains 19 rows.
+References with employees and job_history table.';
 
 
+-- COUNTRIES1 COMMENTS
+COMMENT ON COLUMN COUNTRIES1.COUNTRY_ID IS 'Primary key of countries table.';
+COMMENT ON COLUMN COUNTRIES1.COUNTRY_NAME IS 'Country name';
+COMMENT ON COLUMN COUNTRIES1.REGION_ID IS 'Region ID for the country. Foreign key to region_id column in the departments table.';
+COMMENT ON TABLE COUNTRIES1 IS 'country table. Contains 25 rows. References with locations table.';
+
+
+-- LOCATIONS1 COMMENTS
+COMMENT ON COLUMN LOCATIONS1.LOCATION_ID IS 'Primary key of locations table';
+COMMENT ON COLUMN LOCATIONS1.STREET_ADDRESS IS 'Street address of an office, warehouse, or production site of a company.
+Contains building number and street name';
+COMMENT ON COLUMN LOCATIONS1.POSTAL_CODE IS 'Postal code of the location of an office, warehouse, or production site of a company. ';
+COMMENT ON COLUMN LOCATIONS1.CITY IS 'A not null column that shows city where an office, warehouse, or production site of a company is located. ';
+COMMENT ON COLUMN LOCATIONS1.STATE_PROVINCE IS 'State or Province where an office, warehouse, or production site of a company is located.';
+COMMENT ON COLUMN LOCATIONS1.COUNTRY_ID IS 'Country where an office, warehouse, or production site of a company is located. 
+Foreign key to country_id column of the countries table.';
+COMMENT ON TABLE LOCATIONS1 IS 'Locations table that contains specific address of a specific office, warehouse, and/or production site of a company. 
+Does not store addresses / locations of customers. Contains 23 rows; references with the departments and countries tables. ';
+
+
+-- DEAPRATMENTS1 COMMENTS
+COMMENT ON COLUMN DEPARTMENTS1.DEPARTMENT_ID IS 'Primary key column of departments table.';
+COMMENT ON COLUMN DEPARTMENTS1.DEPARTMENT_NAME IS 'A not null column that shows name of a department. 
+Administration, Marketing, Purchasing, Human Resources, Shipping, IT, Executive, Public Relations, Sales, Finance, and Accounting. ';
+COMMENT ON COLUMN DEPARTMENTS1.MANAGER_ID IS 'Manager_id of a department. Foreign key to employee_id column of employees table. 
+The manager_id column of the employee table references this column.';
+COMMENT ON COLUMN DEPARTMENTS1.LOCATION_ID IS 'Location id where a department is located. 
+Foreign key to location_id column of locations table.';
+COMMENT ON TABLE DEPARTMENTS1 IS 'Departments table that shows details of departments where employees work. 
+Contains 27 rows; references with locations, employees, and job_history tables.';
+
+
+-- EMPLOYEES1 COMMENTS
+COMMENT ON COLUMN EMPLOYEES1.EMPLOYEE_ID IS 'Primary key of employees table.';
+COMMENT ON COLUMN EMPLOYEES1.FIRST_NAME IS 'First name of the employee. A not null column.';
+COMMENT ON COLUMN EMPLOYEES1.LAST_NAME IS 'Last name of the employee. A not null column.';
+COMMENT ON COLUMN EMPLOYEES1.EMAIL IS 'Email id of the employee';
+COMMENT ON COLUMN EMPLOYEES1.PHONE_NUMBER IS 'Phone number of the employee; includes country code and area code';
+COMMENT ON COLUMN EMPLOYEES1.HIRE_DATE IS 'Date when the employee started on this job. A not null column.';
+COMMENT ON COLUMN EMPLOYEES1.JOB_ID IS 'Current job of the employee; foreign key to job_id column of the jobs table. A not null column.';
+COMMENT ON COLUMN EMPLOYEES1.SALARY IS 'Monthly salary of the employee. Must be greater than zero (enforced by constraint emp_salary_min)';
+COMMENT ON COLUMN EMPLOYEES1.COMMISSION_PCT IS 'Commission percentage of the employee; Only employees in sales department elgible for commission percentage';
+COMMENT ON COLUMN EMPLOYEES1.MANAGER_ID IS 'Manager id of the employee; has same domain as manager_id in departments table. 
+Foreign key to employee_id column of employees table. (useful for reflexive joins and CONNECT BY query)';
+COMMENT ON COLUMN EMPLOYEES1.DEPARTMENT_ID IS 'Department id where employee works; foreign key to department_id column of the departments table';
+COMMENT ON TABLE EMPLOYEES1 IS 'employees table. Contains 107 rows. References with departments, jobs, job_history tables. Contains a self reference.';
+
+
+-- JOB_HISTORY1 COMMENTS
+COMMENT ON COLUMN JOB_HISTORY1.EMPLOYEE_ID IS 'A not null column in the complex primary key employee_id+start_date. Foreign key to employee_id column of the employee table';
+COMMENT ON COLUMN JOB_HISTORY1.START_DATE IS 'A not null column in the complex primary key employee_id+start_date.
+Must be less than the end_date of the job_history table. (enforced by constraint jhist_date_interval)';
+COMMENT ON COLUMN JOB_HISTORY1.END_DATE IS 'Last day of the employee in this job role. 
+A not null column. Must be greater than the start_date of the job_history table. (enforced by constraint jhist_date_interval)';
+COMMENT ON COLUMN JOB_HISTORY1.JOB_ID IS 'Job role in which the employee worked in the past; 
+foreign key to job_id column in the jobs table. A not null column.';
+COMMENT ON COLUMN JOB_HISTORY1.DEPARTMENT_ID IS 'Department id in which the employee worked in the past; foreign key to deparment_id column in the departments table';
+COMMENT ON TABLE JOB_HISTORY1 IS 'Table that stores job history of the employees. 
+If an employee changes departments within the job or changes jobs within the department,
+new rows get inserted into this table with old job information of the employee. 
+Contains a complex primary key: employee_id+start_date.
+Contains 25 rows. References with jobs, employees, and departments tables.';
 
 
 --------------------------------------------------------------------------------
+
+
 -- 가장 문제가 되었던 제약조건
 --ALTER TABLE DEPARTMENTS1
 --ADD CONSTRAINT DEPT1_MGR_FK FOREIGN KEY(MANAGER_ID)
 --                 REFERENCES EMPLOYEES1(EMPLOYEE_ID);
+--==>>
+/*
+DEPARTMENTS 테이블과 EMPLOYEES 테이블을 만들 때
+참조관계를 설정하다보니 서로가 서로를 상호참조하게 되는 상황이 만들어졌고
+서로가 서로의 부모테이블이 되어 먼저 생성해야할 테이블을 정할 수 없게 되는 상황이 됨
+그래서 DEPARTMENTS 테이블의 FK 제약조건 부여를 테이블 생성 이후로 미루어 해당 문제를 해결(?)
+*/
+
+-- 제약조건 비활성화(일시정지)
+--ALTER TABLE 테이블명
+--DISABLE CONSTRAINT CONSTRAINT명;
+
+-- 제약조건 활성화(일시정지 해제)
+--ALTER TABLE 테이블명
+--ENABLE CONSTRAINT CONSTRAINT명;
+
+
 
 -- 테이블, 제약조건, 시퀀스 삭제문
 --ALTER TABLE 테이블명 DROP CONSTRAINT 제약조건명;
