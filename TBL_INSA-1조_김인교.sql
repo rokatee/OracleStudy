@@ -395,20 +395,66 @@ SELECT NAME "이름"
      , NVL2(TEL, REPLACE(TEL, '-', ''), '전화번호없음') "전화번호"
 FROM TBL_INSA;
    
-   
-   
-추가문제. (기본 문제 풀이가 모두 끝난 후 작성한다.)
-          HR계정의 EMPLOYEES 테이블에서 커미션 받는 사람의 수와
-          안받는 사람의 수를 조회한다.
-          출력형태 ---------------
-              구분        인원수
-          커미션받는사원    XXX
-          커미션없는사원    XXX
-          모든사원          XXX
 
-33. TBL_INSA 테이블에서 BASICPAY + SUDANG 이 
-    100만원 미만, 100만원 이상~200만원 미만, 
-    200만원 이상인 직원들의 수 조회.
+
+--추가문제. (기본 문제 풀이가 모두 끝난 후 작성한다.)
+--          HR계정의 EMPLOYEES 테이블에서 커미션 받는 사람의 수와
+--          안받는 사람의 수를 조회한다.
+--          출력형태 ---------------
+--              구분        인원수
+--          커미션받는사원    XXX
+--          커미션없는사원    XXX
+--          모든사원          XXX
+--          (힌트. COUNT(), NVL2(), GROUP BY 구문)
+SELECT *
+FROM EMPLOYEES; 
+
+SELECT NVL2(COMMISSION_PCT, '받는 직원', '안받는 직원')
+     , COUNT(*) AS "직원수"
+FROM EMPLOYEES 
+GROUP BY NVL2(COMMISSION_PCT, '받는 직원', '안받는 직원');
+--==>>
+/*
+안받는 직원	72
+받는 직원	35
+*/
+
+--33. TBL_INSA 테이블에서 BASICPAY + SUDANG 이 
+--    100만원 미만, 100만원 이상~200만원 미만, 
+--    200만원 이상인 직원들의 수 조회.
+
+SELECT NAME "이름", BASICPAY + SUDANG "급여"
+     , COUNT(*) "직원수"
+FROM TBL_INSA
+WHERE BASICPAY + SUDANG 이 
+        100만원 미만
+        100만원 이상~200만원 미만
+        200만원 이상인 직원들의 수;
+        
+        
+SELECT NAME "이름", BASICPAY + SUDANG "급여"
+     , COUNT(*) "직원수"
+FROM TBL_INSA
+WHERE CASE WHEN BASICPAY + SUDANG THEN ELSE END;
+        
+        
+SELECT COUNT(*) AS 직원수 
+FROM INSA 
+GROUP BY CASE WHEN (BASICPAY+SUDANG) < 1000000 
+                THEN '구간1A'--4 
+              WHEN (BASICPAY+SUDANG) >=1000000 
+               AND (BASICPAY+SUDANG) < 2000000 
+                THEN '구간2B'--30
+              WHEN (BASICPAY+SUDANG) >= 2000000 
+                THEN '구간3C' --26
+         END;
+
+
+SELECT DECODE(TRUNC( (BASICPAY + SUDANG)/1000000), 0, 'C그룹', 1, 'B그룹', 2, 'A그룹')
+     , COUNT(*) AS 그룹당직원수?? 
+FROM TBL_INSA?? 
+GROUP BY DECODE(TRUNC( (BASICPAY + SUDANG)/1000000), 0, 'C그룹', 1, 'B그룹', 2, 'A그룹');
+
 
 34. TBL_INSA 테이블에서 주민번호를 가지고 생년월일의 년도별 직원수 조회.
 
