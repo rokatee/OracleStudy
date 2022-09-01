@@ -19,6 +19,8 @@ FROM TBL_INSA;
 SELECT FN_GENDER('751212-1234657') "성별확인"
 FROM DUAL;
 
+
+
 --○ 정의한 함수 테스트
 -- FN_POW()
 SELECT FN_POW(10, 3)
@@ -36,8 +38,17 @@ FROM TBL_INSA;
 김신애	10902000
 */
 
-
-
+-- FN_WORKYEAR()
+SELECT NAME, FN_WORKYEAR(IBSADATE)
+FROM TBL_INSA;
+--==>>
+/*
+홍길동	23.9
+이순신	21.7
+이순애	23.5
+    :
+김신애	20.9
+*/
 
 
 

@@ -561,8 +561,14 @@ FROM
 ) T
 GROUP BY T.부서;
 
-39. 서울 사람의 남자 인원수 조회.
+--인라인뷰 없이 푸는 방법 고민 해봄
+SELECT BUSEO "부서"
+     , DECODE(BUSEO, '개발부', COUNT(*), '영업부', COUNT(*), '총무부', COUNT(*)) "직원수"
+FROM TBL_INSA
+WHERE BUSEO IN ('개발부', '영업부', '총무부')
+GROUP BY BUSEO;
 
+--39. 서울 사람의 남자 인원수 조회.
 -- 서울 사는 남자 목록 조회
 SELECT NAME, CITY, SSN
 FROM TBL_INSA
@@ -588,13 +594,52 @@ WHERE CITY = '서울'
 GROUP BY CITY;
 
   
-40. 부서가 영업부이고, 남자 인원수, 여자 인원수 조회.  COUNT(), DECODE() 함수 이용.
+--40. 부서가 영업부이고, 남자 인원수, 여자 인원수 조회.  COUNT(), DECODE() 함수 이용.
+SELECT T.성별 "성볇", COUNT(*) "인원수"
+FROM
+(
+    SELECT DECODE(SUBSTR(SSN, 8, 1), '1', '남자', '3', '남자', '2', '여자', '4', '여자') "성별"
+         , NAME "이름"
+         , BUSEO "부서"
+    FROM TBL_INSA
+    WHERE BUSEO = '영업부'
+) T
+GROUP BY T.성별;
 
-41. 개발부, 영업부, 총무부 인원수 조회. 단, 지역은 '서울'로 한정.
+--41. 개발부, 영업부, 총무부 인원수 조회. 단, 지역은 '서울'로 한정.
+SELECT BUSEO "부서", DECODE(BUSEO, '개발부', COUNT(*), '영업부', COUNT(*), '총무부', COUNT(*) ) "인원수"
+FROM TBL_INSA
+WHERE CITY = '서울'
+  AND BUSEO IN ('개발부', '영업부', '총무부')
+GROUP BY BUSEO;
 
-42. 서울 사람의 남자와 여자의 기본급합 조회.
+--42. 서울 사람의 남자와 여자의 기본급합 조회.
+-- 남/녀 개인의 기본급
+SELECT BASICPAY "기본급"
+     , DECODE(SUBSTR(SSN, 8, 1), '1', '남자', '3', '남자', '2', '여자', '4', '여자') "성별"
+FROM TBL_INSA
+WHERE CITY = '서울';
 
-43. 남자와 여자의 기본급 평균값 조회. AVG(), DECODE() 함수 이용.
+-- 남/녀 기본급합
+SELECT T.성별 "성별", SUM(T.기본급) "기본급합"
+FROM
+(
+    SELECT BASICPAY "기본급"
+         , DECODE(SUBSTR(SSN, 8, 1), '1', '남자', '3', '남자', '2', '여자', '4', '여자') "성별"
+    FROM TBL_INSA
+    WHERE CITY = '서울'
+) T
+GROUP BY T.성별;
+
+--43. 남자와 여자의 기본급 평균값 조회. AVG(), DECODE() 함수 이용.
+SELECT T.성별 "성별", TRUNC(AVG(T.기본급),0) "평균값"
+FROM
+(
+    SELECT BASICPAY "기본급"
+         , DECODE(SUBSTR(SSN, 8, 1), '1', '남자', '3', '남자', '2', '여자', '4', '여자') "성별"
+    FROM TBL_INSA
+) T
+GROUP BY T.성별;
 
 44. 개발부의 남자, 여자 기본급 평균값 조회.
 

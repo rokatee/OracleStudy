@@ -72,9 +72,12 @@ DESC TBL_INSA;
 --==>> SSN → VARCHAR2(14)
 
 --CREATE OR REPLACE FUNCTION FN_GENDER( V_SSN VARCHAR2(14) )
-CREATE OR REPLACE FUNCTION FN_GENDER( V_SSN VARCHAR2 )         -- 매개변수 : 자릿수(길이) 지정 안함 : VARCHAR2(14) 아님
+CREATE OR REPLACE FUNCTION FN_GENDER
+( 
+    V_SSN VARCHAR2              -- 매개변수 : 자릿수(길이) 지정 안함 : VARCHAR2(14) 아님
+)
 --RETURN VARCHAR2(24)
-RETURN VARCHAR2                                                -- 반환자료형 : 자릿수(길이) 지정 안함
+RETURN VARCHAR2                 -- 반환자료형 : 자릿수(길이) 지정 안함
 IS
     -- 선언부(주요 변수 선언)
     V_RESULT    VARCHAR2(24);
@@ -87,7 +90,10 @@ END;
 
 
 
-CREATE OR REPLACE FUNCTION FN_GENDER( V_SSN VARCHAR2 )
+CREATE OR REPLACE FUNCTION FN_GENDER
+( 
+    V_SSN VARCHAR2 
+)
 RETURN VARCHAR2
 IS
     -- 선언부(주요 변수 선언)
@@ -118,7 +124,11 @@ SELECT FN_POW(10, 3)
 FROM DUAL;
 --==>> 1000
 */
-CREATE OR REPLACE FUNCTION FN_POW( A NUMBER, B NUMBER )
+CREATE OR REPLACE FUNCTION FN_POW
+( 
+    A NUMBER
+  , B NUMBER 
+)
 RETURN NUMBER
 IS
     -- 선언부(주요 변수 선언)
@@ -132,15 +142,21 @@ BEGIN
     
     RETURN V_RESULT;
 END;
+--==>> Function FN_POW이(가) 컴파일되었습니다.
 
+-- 테스트
 SELECT FN_POW(5, 3)
 FROM DUAL;
-
+--==>> 125
 
 --○ TBL_INSA 테이블의 급여 계산 전용 함수를 정의한다
 --   급여는 (기본급*12)+수당 기반으로 연산을 수행한다
 --   함수명 : FN_PAY(기본급, 수당)
-CREATE OR REPLACE FUNCTION FN_PAY( V_BASICPAY NUMBER, V_SUDADNG NUMBER)
+CREATE OR REPLACE FUNCTION FN_PAY
+(
+    V_BASICPAY NUMBER
+  , V_SUDADNG  NUMBER
+)
 RETURN NUMBER
 IS
     V_SALARY    NUMBER;
@@ -148,6 +164,85 @@ BEGIN
     V_SALARY := (NVL(V_BASICPAY, 0) * 12) + NVL(V_SUDADNG, 0);
     RETURN V_SALARY;
 END;
+--==>> Function FN_PAY이(가) 컴파일되었습니다.
 
+-- 테스트
 SELECT NAME "이름", FN_PAY(BASICPAY, SUDANG) "기본급+수당"
 FROM TBL_INSA;
+--==>>
+/*
+홍길동	31520000
+이순신	16040000
+    :
+김신애	10902000
+*/
+
+
+--○ TBL_INSA 테이블에서 입사일을 기준으로
+--   현재까지의 근무년수를 반환하는 함수를 정의한다
+--   단, 근무년수는 소수점 이하 한자리까지 계산한다
+--   함수명 : FN_WORKYEAR(입사일)
+DESC TBL_INSA;
+
+SELECT NAME, IBSADATE
+FROM TBL_INSA;
+
+-- 내가 푼 방법
+CREATE OR REPLACE FUNCTION FN_WORKYEAR
+(
+    V_IBSADATE  DATE
+)
+RETURN NUMBER
+IS
+    V_TEMP    NUMBER; -- 소수점을 정리하기 전 근무년수를 담을 변수
+    V_RESULT  NUMBER; -- 최종 근무년수를 담을 변수
+BEGIN
+    --근무년수 := 현재년도-입사년도
+    --V_TEMP := SYSDATE - V_IBSADATE; -- 이렇게 해도 됨
+    V_TEMP := TO_DATE(TO_CHAR(SYSDATE, 'YYYY-MM-DD')) - TO_DATE(TO_CHAR(V_IBSADATE, 'YYYY-MM-DD'));
+    V_RESULT := TRUNC((V_TEMP/365),1);
+    RETURN V_RESULT;
+END;
+--==>> Function FN_WORKYEAR이(가) 컴파일되었습니다.
+
+-- 해답 방법
+--1
+SELECT MONTHS_BETWEEN(SYSDATE, '2002-02-11')/12
+FROM DUAL;
+
+--2
+SELECT TRUNC(MONTHS_BETWEEN(SYSDATE, '2002-02-11')/12) || '년' ||
+       TRUNC(MOD(MONTHS_BETWEEN(SYSDATE, '2002-02-11'), 12) ) || '개월'
+FROM DUAL;
+
+--3
+SELECT NAME, IBSADATE, FN_WORKYEAR(IBSADATE) "근무기가"
+FROM TBL_INSA;
+
+--4
+CREATE OR REPLACE FUNCTION FN_WORKYEAR
+( 
+    V_IBSADATE  DATE
+)
+RETURN VARCHAR2
+IS
+    V_RESULT  VARCHAR2(20);
+BEGIN
+--    V_RESULT := TRUNC(MONTHS_BETWEEN(SYSDATE, V_IBSADATE)/12) || '년' ||
+--                TRUNC(MOD(MONTHS_BETWEEN(SYSDATE, V_IBSADATE), 12) )  || '개월';
+    V_RESULT := TRUNC(MONTHS_BETWEEN(SYSDATE, V_IBSADATE)/12, 1);                       
+    RETURN V_RESULT;
+END;
+--==>> Function FN_WORKYEAR이(가) 컴파일되었습니다.
+
+-- 테스트
+SELECT NAME, IBSADATE, FN_WORKYEAR(IBSADATE)
+FROM TBL_INSA;
+--==>>
+/*
+홍길동	23.9
+이순신	21.7
+이순애	23.5
+    :
+김신애	20.9
+*/
