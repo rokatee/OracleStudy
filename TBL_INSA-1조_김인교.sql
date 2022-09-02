@@ -842,21 +842,57 @@ FROM TBL_INSA
 WHERE EXTRACT(YEAR FROM SYSDATE) - TO_NUMBER(TO_CHAR(IBSADATE, 'YYYY') ) BETWEEN 24 AND 27
 ORDER BY 근무년수;
 
-61. 김씨, 이씨, 박씨만 조회 (이름, 부서). SUBSTR() 함수 이용.
+--61. 김씨, 이씨, 박씨만 조회 (이름, 부서). SUBSTR() 함수 이용.
+SELECT NAME, BUSEO
+FROM TBL_INSA
+WHERE SUBSTR(NAME, 1, 1) IN ('김', '이', '박');
 
-62. 입사일을 "년-월-일 요일" 형식으로 남자만 조회 (이름, 주민번호, 입사일)
+--62. 입사일을 "년-월-일 요일" 형식으로 남자만 조회 (이름, 주민번호, 입사일)
+SELECT NAME, SSN, TO_CHAR(IBSADATE, 'YYYY-MM-DD DAY')
+FROM TBL_INSA
+WHERE SUBSTR(SSN, 8, 1) IN ('1', '3');
 
-63. 부서별 직위별 급여합 구하기. (부서, 직위, 급여합)
+--63. 부서별 직위별 급여합 구하기. (부서, 직위, 급여합)
+SELECT BUSEO, JIKWI
+     , SUM(BASICPAY + SUDANG) "급여합"
+FROM TBL_INSA
+GROUP BY BUSEO, JIKWI
+ORDER BY BUSEO, 급여합 DESC;
 
-64. 부서별 직위별 인원수, 급여합, 급여평균 구하기. (부서, 직위, 급여합)
+--64. 부서별 직위별 인원수, 급여합, 급여평균 구하기. (부서, 직위, 급여합)
+SELECT BUSEO, JIKWI, COUNT(*)
+     , SUM(BASICPAY + SUDANG) "급여합"
+     , ROUND(AVG(BASICPAY + SUDANG),1) "급여평균"
+FROM TBL_INSA
+GROUP BY BUSEO, JIKWI
+ORDER BY BUSEO;
 
-65. 부서별 직위별 인원수를 구하되 인원수가 5명 이상인 경우만 조회.
+--65. 부서별 직위별 인원수를 구하되 인원수가 5명 이상인 경우만 조회.
+SELECT BUSEO, JIKWI, COUNT(*)
+FROM TBL_INSA
+GROUP BY BUSEO, JIKWI
+HAVING COUNT(*) >= 5
+ORDER BY BUSEO;
 
-66. 2000년에 입사한 여사원 조회. (이름, 주민번호, 입사일)
+--66. 2000년에 입사한 여사원 조회. (이름, 주민번호, 입사일)
+SELECT NAME, SSN, IBSADATE
+FROM TBL_INSA
+WHERE TO_CHAR(IBSADATE, 'YYYY') = 2000
+  AND SUBSTR(SSN, 8, 1) IN ('2', '4');
 
-67. 성씨가 한 글자(김, 이, 박 등)라는 가정하에 성씨별 인원수 조회 (성씨, 인원수)
+--67. 성씨가 한 글자(김, 이, 박 등)라는 가정하에 성씨별 인원수 조회 (성씨, 인원수)
+SELECT SUBSTR(NAME, 1, 1) "성씨"
+     , COUNT(*)
+FROM TBL_INSA
+GROUP BY SUBSTR(NAME, 1, 1);
 
 68. 출신도(CITY)별 성별 인원수 조회.
+
+SELECT CITY
+     , COUNT(DECODE(SUBSTR(SSN, 8, 1), '1', '남자', '3', '남자')) "남자수"
+     , COUNT(DECODE(SUBSTR(SSN, 8, 1), '2', '여자', '4', '여자')) "여자수"
+FROM TBL_INSA
+GROUP BY CITY, SUBSTR(SSN, 8, 1);
 
 69. 부서별 남자인원수가 5명 이상인 부서와 남자인원수 조회.
 

@@ -444,19 +444,3 @@ BEGIN
     COMMIT;
 END;
 --==>> Procedure PRC_INSA_INSERT이(가) 컴파일되었습니다.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
