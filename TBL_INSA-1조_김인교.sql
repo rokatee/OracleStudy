@@ -886,31 +886,113 @@ SELECT SUBSTR(NAME, 1, 1) "성씨"
 FROM TBL_INSA
 GROUP BY SUBSTR(NAME, 1, 1);
 
-68. 출신도(CITY)별 성별 인원수 조회.
-
+--68. 출신도(CITY)별 성별 인원수 조회.
 SELECT CITY
      , COUNT(DECODE(SUBSTR(SSN, 8, 1), '1', '남자', '3', '남자')) "남자수"
      , COUNT(DECODE(SUBSTR(SSN, 8, 1), '2', '여자', '4', '여자')) "여자수"
 FROM TBL_INSA
-GROUP BY CITY, SUBSTR(SSN, 8, 1);
+GROUP BY CITY;
 
-69. 부서별 남자인원수가 5명 이상인 부서와 남자인원수 조회.
+--69. 부서별 남자인원수가 5명 이상인 부서와 남자인원수 조회.
+SELECT BUSEO
+     , COUNT(DECODE(SUBSTR(SSN, 8, 1), '1', '남자', '3', '남자') ) "남자수"
+FROM TBL_INSA
+GROUP BY BUSEO
+HAVING COUNT(DECODE(SUBSTR(SSN, 8, 1), '1', '남자', '3', '남자') ) >= 5;
 
-70. 입사년도별 인원수 조회.
 
-71. 전체인원수, 2000년, 1999년, 1998년도에 입사한 인원을 다음의 형식으로 조회.
-    출력형태 ---------------    
-    전체 2000 1999 1998
-      60    x    x    x
+--70. 입사년도별 인원수 조회.
+SELECT TO_CHAR(IBSADATE, 'YYYY') "입사년도"
+     , COUNT(*) "인원수"
+FROM TBL_INSA
+GROUP BY TO_CHAR(IBSADATE, 'YYYY')
+ORDER BY 입사년도;
 
-72. 아래 형식으로 지역별 인원수 조회.
-    출력형태 -----------------
-    전체 서울  인천  경기
-      60    x     x     x
+--71. 전체인원수, 2000년, 1999년, 1998년도에 입사한 인원을 다음의 형식으로 조회.
+/*
+실행 예)
 
-73. 기본급(BASICPAY)이 평균 이하인 사원 조회. (이름, 기본급). AVG() 함수. 서브쿼리.
+전체 2000 1999 1998
+ 60    x    x    x
+*/
+SELECT COUNT(*) "전체"
+     , COUNT(DECODE(TO_CHAR(IBSADATE, 'YYYY'), '2000', 1) ) "2000년"
+     , COUNT(DECODE(TO_CHAR(IBSADATE, 'YYYY'), '1999', 1) ) "1999년"
+     , COUNT(DECODE(TO_CHAR(IBSADATE, 'YYYY'), '1998', 1) ) "1998년"
+FROM TBL_INSA;
 
-74. 기본급 상위 10%만 조회. (이름, 기본급)
+--72. 아래 형식으로 지역별 인원수 조회.
+/*
+실행 예)
+전체 서울  인천  경기
+ 60    x     x     x
+*/
+SELECT COUNT(*) "전체"
+     , COUNT(DECODE(CITY, '서울', 1) ) "서울"
+     , COUNT(DECODE(CITY, '인천', 1) ) "인천"
+     , COUNT(DECODE(CITY, '경기', 1) ) "경기"
+FROM TBL_INSA;
+
+--73. 기본급(BASICPAY)이 평균 이하인 사원 조회. (이름, 기본급). AVG() 함수. 서브쿼리.
+
+--기본급(BASICPAY) 평균 
+SELECT ROUND(AVG(BASICPAY),1) "기본급 평균"
+FROM TBL_INSA;
+--==>> 1563796.7
+
+SELECT NAME, BASICPAY
+FROM TBL_INSA
+WHERE BASICPAY <= (SELECT ROUND(AVG(BASICPAY),1)
+                   FROM TBL_INSA);
+
+--74. 기본급 상위 10%만 조회. (이름, 기본급)
+-- 기본급 내림차순
+SELECT NAME, BASICPAY
+     , PERCENT_RANK() OVER(ORDER BY BASICPAY DESC) "상위랭킹"
+FROM TBL_INSA;
+
+
+SELECT *
+FROM 
+(
+    SELECT NAME, BASICPAY
+         , PERCENT_RANK() OVER(ORDER BY BASICPAY DESC) "상위랭킹"
+    FROM TBL_INSA
+) T
+WHERE T.상위랭킹 <= 0.1;
+
+
+SELECT *
+FROM (SELECT name, basicpay
+           , RANK() OVER(ORDER BY basicpay DESC) AS rank
+      FROM TBL_INSA)
+WHERE rank <= (SELECT COUNT(*) * 0.1 AS 총원
+               FROM TBL_INSA);
+
+
+SELECT NAME,BASICPAY
+FROM
+(
+    SELECT NAME,BASICPAY
+         , DENSE_RANK() OVER(ORDER BY BASICPAY DESC)"연봉순위"
+    FROM TBL_INSA
+) T
+WHERE T.연봉순위 <= TRUNC( ( SELECT COUNT(*)
+                             FROM TBL_INSA ) * 0.1);
+
+
+
+SELECT * 
+FROM (SELECT total_bill, 
+      PERCENT_RANK() OVER (ORDER BY total_bill DESC) as per_rank 
+      FROM tips) a
+WHERE a.per_rank <= 0.01;
+
+SELECT EMPNO "사원번호", ENAME "사원명", DEPTNO "부서번호", SAL "급여"
+     , RANK() OVER(PARTITION BY DEPTNO ORDER BY SAL DESC) "부서별급여순위"
+     , RANK() OVER(ORDER BY SAL DESC) "전체급여순위"
+FROM EMP
+ORDER BY DEPTNO;
 
 75. 기본급 순위가 5순위까지만 조회. (모든 정보)
 

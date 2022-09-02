@@ -366,6 +366,7 @@ EXEC PRC_입고_UPDATE(1, 10);
 */
 CREATE OR REPLACE PROCEDURE PRC_입고_UPDATE
 (
+  
 )
 IS
 BEGIN
@@ -428,8 +429,6 @@ BEGIN
             THEN RAISE USER_DEFINE_ERROR;
     END IF;
     
-    10 - 11
-    
     --② 수행될 쿼리문 체크(DELETE → TBL_입고)
     DELETE
     FROM TBL_입고
@@ -448,7 +447,7 @@ BEGIN
             THEN ROLLBACK;
     
     --⑦ 커밋
---    COMMIT;
+    COMMIT;
 END;
 --==>> Procedure PRC_입고_DELETE이(가) 컴파일되었습니다.
 
@@ -499,9 +498,9 @@ BEGIN
     UPDATE TBL_상품
     SET 재고수량 = 재고수량 + V_출고수량
     WHERE 상품코드 = V_상품코드;
-    
+            
     -- 커밋
-    COMMIT;
+--    COMMIT;
 END;
 --==>> Procedure PRC_출고_DELETE이(가) 컴파일되었습니다.
 

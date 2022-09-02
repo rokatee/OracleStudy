@@ -574,24 +574,6 @@ FROM TBL_상품;
 
 
 
---UPDATE TBL_입고
---SET 입고수량 = 20
---WHERE 상품코드 = 'E009';  
-
-INSERT INTO TBL_입고(입고번호,상품코드, 입고수량, 입고단가)
-    VALUES(8, 'E008', 10, 10);
---
-UPDATE TBL_상품
-SET 재고수량 = 10
-WHERE 상품명 = '엑설런트';
---
---INSERT INTO TBL_출고(출고번호,상품코드, 출고수량, 출고단가)
---    VALUES(2, 'E009', 10, 11);
-
---UPDATE TBL_출고
---SET 출고수량 = 11
---WHERE 상품코드 = 'E009';
-
 --○ PRC_입고_DELETE 프로시저 호출 전 데이터 조회
 SELECT *
 FROM TBL_입고;
