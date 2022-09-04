@@ -144,7 +144,9 @@ END;
 
 
 
+
 --------------------------------------------------------------------------------
+---PRC_출고_INSERT()------------------------------------------------------------
 
 --○ TBL_출고 테이블에 데이터 입력 시(즉, 출고 이벤트 발생 시)
 --   TBL_상품 테이블의 재고 수량이 변동되는 프로시저를 작성한다
@@ -171,6 +173,7 @@ IS
     V_재고수량          TBL_상품.재고수량%TYPE;
     
     USER_DEFINE_ERROR   EXCEPTION;
+    NO_DATA_FOUND       EXCEPTION;
 BEGIN
     -- 쿼리문 수행 이전에 수행 여부를 확인하는 과정에서
     -- 재고 파악 → 기존의 재고를 확인하는 과정이 선행되어야 한다
@@ -203,7 +206,7 @@ BEGIN
     EXCEPTION
         WHEN USER_DEFINE_ERROR
             THEN RAISE_APPLICATION_ERROR(-20002, '재고수량 부족');
-                ROLLBACK;   -- 이미 IF문에서 예외처리를 함으로서
+             -- ROLLBACK;   -- 이미 IF문에서 예외처리를 함으로서
                             -- INSERT와 UPDATE이 작동되지 않기에
                             -- 롤백 해줄 일이 없어서 써주지 않아도 된다
         WHEN OTHERS
@@ -214,7 +217,8 @@ END;
 --==>> Procedure PRC_출고_INSERT이(가) 컴파일되었습니다.
 
 
-
+--------------------------------------------------------------------------------
+---PRC_출고_UPDATE()------------------------------------------------------------
 
 --● TBL_출고 테이블에서 출고 수량을 변경(수정)하는 프로시저를 작성한다.
 
@@ -319,7 +323,7 @@ BEGIN
     FROM TBL_상품
     WHERE 상품코드 = V_상품코드;
     
-    --⑥ 출고 정상 수행 여부 판단 필요
+    --⑧ 출고 정상 수행 여부 판단 필요
     --   변경 이전의 출고수량 및 현재의 재고수량 확인
 --    IF (파악한 현재 재고수량과 이전의 출고수량을 합친 값이 현재의 출고수량보다 적으면)
 --        예외 발생
@@ -328,12 +332,12 @@ BEGIN
         THEN RAISE USER_DEFINE_ERROR;
     END IF;
 
-    --② 수행될 쿼리문 체크(UPDATE → TBL_출고 / UPDATE → TBL_상품)
+    --② 수행될 쿼리문 체크(UPDATE → TBL_출고)
     UPDATE TBL_출고
     SET 출고수량 = V_출고수량
     WHERE 출고번호 = V_출고번호;
     
-    --⑧
+    --⑥ 수행될 쿼리문 체크(UPDATE → TBL_상품)
     UPDATE TBL_상품
     SET 재고수량 = 재고수량 + V_이전출고수량 - V_출고수량
    --  현재 재고수량 = 현재재고수량 + 기존출고수량 - 변경할출고수량
@@ -343,7 +347,6 @@ BEGIN
     EXCEPTION
         WHEN USER_DEFINE_ERROR
             THEN RAISE_APPLICATION_ERROR(-20002, '재고수량 부족');
-                ROLLBACK;
         WHEN OTHERS
             THEN ROLLBACK;
     
@@ -353,158 +356,27 @@ BEGIN
 END;
 --==>> Procedure PRC_출고_UPDATE이(가) 컴파일되었습니다.
 
+
 --------------------------------------------------------------------------------
---과제
+--------------------------------------------------------------------------------
+
+
+--○ 입출고 및 재고 총 과정
+--==>>
 /*
-1. PRC_입고_UPDATE(입고번호, 입고수량)
-    입고된 수량 변경 (원래대로라면 입고번호 이후에 출고된 것들을 다 고려해야 함)
+TBL_상품 테이블 생성 및 데이터 추가
+TBL_입고 테이블 생성 및 데이터 추가
+TBL_출고 테이블 생성 및 데이터 추가
 
-실행 예)
-EXEC PRC_입고_UPDATE(입고번호, 입고수량);
+PRC_입고_INSERT -> 특정상품 입고(추가)     및 재고수량 변경(증가)
 
-EXEC PRC_입고_UPDATE(1, 10);
+PRC_출고_INSERT -> 특정상품 출고(생성)     및 재고수량 변경(감소)
+PRC_출고_UPDATE -> 출고된 상품 출고량 변경 및 재고수량 변경
+
+PRC_입고_UPDATE -> 기존 입고된 수 변경     및 재고수량 변경
+PRC_입고_DELETE -> 기존 입고량 감소        및 재고수량 변경(감소)
+PRC_출고_DELETE -> 기존 출고량 감소        및 재고수량 변경(증가)
 */
-CREATE OR REPLACE PROCEDURE PRC_입고_UPDATE
-(
-  
-)
-IS
-BEGIN
-
-    --커밋
-    --COMMIT;
-END;
-
-
-
-/*
-2. PRC_입고_DELETE(입고번호)
-    입고번호의 입고수량이 지워진 만큼 상품에서 감소, 재고가 출고 이전의 상태로 돌아감
-
-실행 예)
-EXEC PRC_입고_DELETE(입고번호);
-
-EXEC PRC_입고_DELETE(1);
-*/
-DESC TBL_입고;
-/*
-입고번호 NOT NULL NUMBER       
-상품코드          VARCHAR2(20) 
-입고일자          DATE         
-입고수량          NUMBER       
-입고단가          NUMBER     
-*/
-CREATE OR REPLACE PROCEDURE PRC_입고_DELETE
-(
-  --① 매개변수 구성
-  V_입고번호    IN TBL_입고.입고번호%TYPE
-)
-IS
-    --③ 필요한 변수 추가 선언
-    V_입고수량  TBL_입고.입고수량%TYPE;
-    V_재고수량  TBL_상품.재고수량%TYPE;
-    V_상품코드  TBL_상품.상품코드%TYPE;
-    
-    --⑤ 예외처리
-    USER_DEFINE_ERROR   EXCEPTION;
-BEGIN
-    -- 선언한 변수에 값 담아내기
-    --④ 입고수량과 상품코드 파악
-    SELECT 입고수량, 상품코드 INTO V_입고수량, V_상품코드
-    FROM TBL_입고
-    WHERE 입고번호 = V_입고번호;
-    
-    -- 재고수량 파악
-    SELECT 재고수량 INTO V_재고수량
-    FROM TBL_상품
-    WHERE 상품코드 = V_상품코드;
-    
-    --⑥ 에러 발생
-    -- 삭제할 입고수량이 재고수량보다 크면 재고수량이 음수가 되므로 예외처리
---    IF (입고100개 → 재고100개, 이때 출고50개 → 재고100-50=50개, 이때 입고 -100개 하면 → 이미 재고50 이므로 50개가 부족해 입고 삭제 X)
---        (재고수량 - 삭제하려는 입고량 < 0)  --> 입고가 여러번 되어 재고가 쌓여 있으면 이것도 틀린식인듯;;
---            THEN 에러발생;
---    END IF;
-    IF (V_재고수량 - V_입고수량 < 0)
-            THEN RAISE USER_DEFINE_ERROR;
-    END IF;
-    
-    --② 수행될 쿼리문 체크(DELETE → TBL_입고)
-    DELETE
-    FROM TBL_입고
-    WHERE 입고번호 = V_입고번호;
-    
-    --④ 수행될 쿼리문 체크(UPDATE → TBL_상품)
-    UPDATE TBL_상품
-    SET 재고수량 = 재고수량 - V_입고수량
-    WHERE 상품코드 = V_상품코드;
-    
-    --⑧ 예외처리
-    EXCEPTION
-        WHEN USER_DEFINE_ERROR
-            THEN RAISE_APPLICATION_ERROR(-20004, '입고내역 삭제 불가능');
-        WHEN OTHERS
-            THEN ROLLBACK;
-    
-    --⑦ 커밋
-    COMMIT;
-END;
---==>> Procedure PRC_입고_DELETE이(가) 컴파일되었습니다.
-
-
-/*
-3. PRC_출고_DELETE(출고번호)
-    삭제된 출고수량만큼 재고수량에 대입
-
-실행 예)
-EXEC PRC_출고_DELETE(출고번호);
-
-EXEC PRC_출고_DELETE(1);
-*/
-DESC TBL_출고;
-/*
-출고번호 NOT NULL NUMBER       
-상품코드          VARCHAR2(20) 
-출고일자          DATE         
-출고수량          NUMBER       
-출고단가          NUMBER 
-*/
-CREATE OR REPLACE PROCEDURE PRC_출고_DELETE
-(
-  --① 매개변수 구성
-  V_출고번호    IN TBL_출고.출고번호%TYPE
-)
-IS
-    --③ 필요한 변수 추가 선언
-    V_상품코드  TBL_상품.상품코드%TYPE;
-    V_출고수량  TBL_출고.출고수량%TYPE;
-    V_재고수량  TBL_상품.재고수량%TYPE;
-    
-BEGIN
-    -- 선언한 변수에 값 담아내기
-    --④ 출고수량과 상품코드 파악
-    SELECT 출고수량, 상품코드 INTO V_출고수량, V_상품코드
-    FROM TBL_출고
-    WHERE 출고번호 = V_출고번호;
-    
-    --② 수행될 쿼리문 체크(DELETE → TBL_출고)
-    -- 출고수량을 지워줌
-    DELETE
-    FROM TBL_출고
-    WHERE 출고번호 = V_출고번호;
-    
-    --⑤ 수행될 쿼리문 체크(UPDATE → TBL_상품)
-    -- 지워진 출고수량만큼 재고수량에 넣어줌
-    UPDATE TBL_상품
-    SET 재고수량 = 재고수량 + V_출고수량
-    WHERE 상품코드 = V_상품코드;
-            
-    -- 커밋
---    COMMIT;
-END;
---==>> Procedure PRC_출고_DELETE이(가) 컴파일되었습니다.
-
-
 
 --------------------------------------------------------------------------------
 --■■■ CURSOR(커서) ■■■--

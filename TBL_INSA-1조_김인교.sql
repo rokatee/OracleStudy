@@ -947,105 +947,258 @@ WHERE BASICPAY <= (SELECT ROUND(AVG(BASICPAY),1)
 
 --74. 기본급 상위 10%만 조회. (이름, 기본급)
 -- 기본급 내림차순
-SELECT NAME, BASICPAY
-     , PERCENT_RANK() OVER(ORDER BY BASICPAY DESC) "상위랭킹"
-FROM TBL_INSA;
-
-
 SELECT *
-FROM 
-(
-    SELECT NAME, BASICPAY
-         , PERCENT_RANK() OVER(ORDER BY BASICPAY DESC) "상위랭킹"
-    FROM TBL_INSA
-) T
-WHERE T.상위랭킹 <= 0.1;
-
-
-SELECT *
-FROM (SELECT name, basicpay
-           , RANK() OVER(ORDER BY basicpay DESC) AS rank
-      FROM TBL_INSA)
-WHERE rank <= (SELECT COUNT(*) * 0.1 AS 총원
-               FROM TBL_INSA);
-
-
-SELECT NAME,BASICPAY
 FROM
 (
     SELECT NAME,BASICPAY
-         , DENSE_RANK() OVER(ORDER BY BASICPAY DESC)"연봉순위"
+         , RANK() OVER(ORDER BY BASICPAY DESC) "기본급순위"
     FROM TBL_INSA
 ) T
-WHERE T.연봉순위 <= TRUNC( ( SELECT COUNT(*)
-                             FROM TBL_INSA ) * 0.1);
+WHERE T.기본급순위 <= (SELECT COUNT(*)
+                       FROM TBL_INSA) * 0.1;
+
+--75. 기본급 순위가 5순위까지만 조회. (모든 정보)
+SELECT *
+FROM 
+(
+    SELECT NUM, NAME, SSN, IBSADATE, CITY, TEL, BUSEO, JIKWI, BASICPAY, SUDANG
+         , RANK() OVER(ORDER BY BASICPAY DESC) "기본급순위"
+    FROM TBL_INSA
+) T
+WHERE T.기본급순위 <= 5;
+
+--76. 입사일이 빠른 순서로 5순위까지만 조회. (모든 정보)
+SELECT *
+FROM
+(
+    SELECT NUM, NAME, SSN, IBSADATE, CITY, TEL, BUSEO, JIKWI, BASICPAY, SUDANG
+         , RANK() OVER(ORDER BY IBSADATE) "입사일순"
+    FROM TBL_INSA
+) T
+WHERE T.입사일순 <= 5;
+
+--77. 평균 급여보다 많은 급여를 받는 직원 정보 조회. (모든 정보)
+--직원들 평균 급여
+SELECT ROUND(AVG(BASICPAY+SUDANG), -1) "급여 평균"
+FROM TBL_INSA;
+
+SELECT *
+FROM TBL_INSA
+WHERE (BASICPAY+SUDANG) > (SELECT ROUND(AVG(BASICPAY+SUDANG), -1)
+                           FROM TBL_INSA);
+
+--78. '이순애' 직원의 급여보다 더 많은 급여를 받는 직원 조회. (모든 정보)
+--    단, 이순애 직원의 급여가 변하더라도 작성된 쿼리문은 기능 수행이 가능하도록 조회.
+-- 이순애 직원의 급여
+SELECT NAME, BASICPAY+SUDANG "급여"
+FROM TBL_INSA
+WHERE NAME = '이순애';
+
+SELECT *
+FROM TBL_INSA
+WHERE (BASICPAY+SUDANG) > (SELECT BASICPAY+SUDANG
+                           FROM TBL_INSA
+                           WHERE NAME = '이순애');
+
+--79. 총무부의 평균 급여보다 많은 급여를 받는 직원들의 이름, 부서명 조회.
+-- 총무부 평균 급여
+SELECT BUSEO, ROUND(AVG(BASICPAY+SUDANG), -1) "평균급여"
+FROM TBL_INSA
+WHERE BUSEO = '총무부'
+GROUP BY BUSEO;
+
+SELECT NAME, BUSEO, BASICPAY+SUDANG "급여"
+FROM TBL_INSA
+WHERE (BASICPAY+SUDANG) > (SELECT ROUND(AVG(BASICPAY+SUDANG), -1)
+                            FROM TBL_INSA
+                            WHERE BUSEO = '총무부')
+ORDER BY BUSEO;
+
+--80. 총무부 직원들의 평균 수당보다 더 많은 수당을 받는 직원 정보 조회.
+SELECT *
+FROM TBL_INSA
+WHERE (SUDANG) > (SELECT ROUND(AVG(SUDANG), -1)
+                  FROM TBL_INSA
+                  WHERE BUSEO = '총무부')
+ORDER BY SUDANG;
 
 
+--81. 직원 전체 평균 급여보다 많은 급여를 받는 직원의 수 조회.
+SELECT COUNT(*) "직원수"
+FROM TBL_INSA
+WHERE (BASICPAY+SUDANG) > (SELECT ROUND(AVG(BASICPAY+SUDANG), -1)
+                            FROM TBL_INSA)
+ORDER BY BUSEO;
 
+--82. '홍길동' 직원과 같은 부서의 직원 정보 조회.
+--    단, 홍길동 직원의 부서가 바뀌더라도 작성된 쿼리문은 기능 수행이 가능하도록 조회.
+SELECT *
+FROM TBL_INSA
+WHERE BUSEO = (SELECT BUSEO
+               FROM TBL_INSA
+               WHERE NAME = '홍길동');
+
+--83. '김신애' 직원과 같은 부서, 직위를 가진 직원 정보 조회.
+--    단, 김신애 직원의 부서 및 직위가 바뀌더라도 작성된 쿼리문은 기능 수행이 가능하도록 조회.
+-- 방법 1
+SELECT *
+FROM TBL_INSA
+WHERE BUSEO = (SELECT BUSEO
+               FROM TBL_INSA
+               WHERE NAME = '김신애')
+  AND JIKWI = (SELECT JIKWI
+               FROM TBL_INSA
+               WHERE NAME = '김신애');
+-- 방법 2
 SELECT * 
-FROM (SELECT total_bill, 
-      PERCENT_RANK() OVER (ORDER BY total_bill DESC) as per_rank 
-      FROM tips) a
-WHERE a.per_rank <= 0.01;
+FROM TBL_INSA
+WHERE BUSEO || JIKWI = (SELECT BUSEO || JIKWI
+                        FROM TBL_INSA
+                        WHERE NAME='김신애');
 
-SELECT EMPNO "사원번호", ENAME "사원명", DEPTNO "부서번호", SAL "급여"
-     , RANK() OVER(PARTITION BY DEPTNO ORDER BY SAL DESC) "부서별급여순위"
-     , RANK() OVER(ORDER BY SAL DESC) "전체급여순위"
-FROM EMP
-ORDER BY DEPTNO;
+--84. 부서별 기본급이 가장 높은 사람 조회. (이름, 부서, 기본급)
+--    단, 사원들의 기본급이 변경되더라도 작성된 쿼리문은 기능 수행이 가능하도록 조회.
+-- 방법 1
+SELECT *
+FROM
+(
+    SELECT NAME, BUSEO, BASICPAY
+         , RANK() OVER(ORDER BY BASICPAY DESC) "기본급순위"
+    FROM TBL_INSA
+) T
+WHERE T.기본급순위 = 1;
 
-75. 기본급 순위가 5순위까지만 조회. (모든 정보)
+--85. 남, 여별 기본급 순위 조회.
+SELECT NAME, BASICPAY
+     , RANK() OVER(PARTITION BY (DECODE(SUBSTR(SSN, 8, 1), '1', '남자', '2', '여자')) ORDER BY BASICPAY DESC) "남, 여별 기본급순위"
+     , DECODE(SUBSTR(SSN, 8, 1), '1', '남자', '2', '여자') "성별" 
+FROM TBL_INSA;
 
-76. 입사일이 빠른 순서로 5순위까지만 조회. (모든 정보)
+--86. 지역(CITY)별로 급여(기본급+수당) 1순위 직원만 조회.
+SELECT *
+FROM
+(
+    SELECT RANK() OVER(PARTITION BY CITY ORDER BY BASICPAY+SUDANG) "급여순위"
+         , CITY
+         , NAME
+         , BASICPAY+SUDANG "급여"
+    FROM TBL_INSA
+) T
+WHERE T.급여순위 = 1
+ORDER BY T.급여 DESC;
 
-77. 평균 급여보다 많은 급여를 받는 직원 정보 조회. (모든 정보)
+--87. 부서별 인원수가 가장 많은 부서 및 인원수 조회.
+SELECT *
+FROM
+(
+    SELECT COUNT(*) "인원수"
+         , RANK() OVER(ORDER BY COUNT(*) DESC) "인원수순위"
+         , BUSEO
+    FROM TBL_INSA
+    GROUP BY BUSEO
+)
+WHERE 인원수순위 = 1; 
 
-78. '이순애' 직원의 급여보다 더 많은 급여를 받는 직원 조회. (모든 정보)
-    단, 이순애 직원의 급여가 변하더라도 작성된 쿼리문은 기능 수행이 가능하도록 조회.
+--88. 지역(CITY)별 인원수가 가장 많은 지역 및 인원수 조회.
+SELECT *
+FROM
+(
+    SELECT COUNT(*) "인원수"
+         , RANK() OVER(ORDER BY COUNT(*) DESC) "인원수순위"
+         , CITY
+    FROM TBL_INSA
+    GROUP BY CITY
+)
+WHERE 인원수순위 = 1; 
 
-79. 총무부의 평균 급여보다 많은 급여를 받는 직원들의 이름, 부서명 조회.
+--89. 지역(CITY)별 평균 급여(BASICPAY + SUDANG)가
+--    가장 높은 지역 및 평균급여 조회.
+SELECT *
+FROM
+(
+    SELECT RANK() OVER(ORDER BY ROUND(AVG(BASICPAY + SUDANG), -1) DESC) "평균급여순위"
+         , ROUND(AVG(BASICPAY + SUDANG), -1) "평균급여"
+         , CITY
+    FROM TBL_INSA
+    GROUP BY CITY
+)
+WHERE 평균급여순위 = 1; 
 
-80. 총무부 직원들의 평균 수당보다 더 많은 수당을 받는 직원 정보 조회.
+--90. 여자 인원수가 가장 많은 부서 및 인원수 조회.
+SELECT *
+FROM
+(
+    SELECT BUSEO
+         , COUNT(*) "여자인원수"
+         , RANK() OVER(ORDER BY COUNT(*) DESC) "인원수순위"
+    FROM TBL_INSA
+    WHERE SUBSTR(SSN, 8, 1) IN (2, 4)
+    GROUP BY BUSEO
+)
+WHERE 인원수순위 = 1;
 
-81. 직원 전체 평균 급여보다 많은 급여를 받는 직원의 수 조회.
+--91. 지역별 인원수 순위 조회.
+SELECT CITY
+     , COUNT(*) "지역별인원수"
+     , RANK() OVER(ORDER BY COUNT(*) DESC) "인원수순위"
+FROM TBL_INSA
+GROUP BY CITY;
 
-82. '홍길동' 직원과 같은 부서의 직원 정보 조회.
-    단, 홍길동 직원의 부서가 바뀌더라도 작성된 쿼리문은 기능 수행이 가능하도록 조회.
+--92. 지역별 인원수 순위 조회하되 5순위까지만 출력.
+SELECT *
+FROM
+(
+    SELECT CITY
+         , COUNT(*) "지역별인원수"
+         , RANK() OVER(ORDER BY COUNT(*) DESC) "인원수순위"
+    FROM TBL_INSA
+    GROUP BY CITY
+)
+WHERE 인원수순위 <= 5;
 
-83. '김신애' 직원과 같은 부서, 직위를 가진 직원 정보 조회.
-    단, 김신애 직원의 부서 및 직위가 바뀌더라도 작성된 쿼리문은 기능 수행이 가능하도록 조회.
+--93. 이름, 부서, 출신도, 기본급, 수당, 기본급+수당, 세금, 실수령액 조회
+--    단, 세금: 총급여가 250만원 이상이면 2%, 200만원 이상이면 1%, 나머지 0.
+--    실수령액: 총급여-세금
+SELECT T.이름, T.부서, T.출신도, T.기본급, T.수당, T.총급여, T.세금
+     , T.총급여 - T.세금 "실수령액"
+FROM
+(
+    SELECT NAME "이름", BUSEO "부서", CITY "출신도" , BASICPAY "기본급", SUDANG "수당", BASICPAY+SUDANG "총급여"
+         , CASE WHEN BASICPAY+SUDANG >= 2500000
+                    THEN (BASICPAY+SUDANG) * 0.02 
+                WHEN BASICPAY+SUDANG >= 2000000
+                    THEN (BASICPAY+SUDANG) * 0.01 
+                ELSE 0 
+           END "세금"
+    FROM TBL_INSA
+) T;
 
-84. 부서별 기본급이 가장 높은 사람 조회. (이름, 부서, 기본급)
-    단, 사원들의 기본급이 변경되더라도 작성된 쿼리문은 기능 수행이 가능하도록 조회.
+--94. 부서별 평균 급여를 조회하되, A, B, C 등급으로 나눠서 출력.
+--    200만원 초과 - A등급
+--    150~200만원  - B등급
+--    150만원 미만 - C등급
 
-85. 남, 여별 기본급 순위 조회.
+SELECT BUSEO
+     , ROUND(AVG(BASICPAY+SUDANG),-1) "평균급여"
+     , CASE WHEN ROUND(AVG(BASICPAY+SUDANG),-1) > 2000000
+                    THEN 'A등급'
+            WHEN ROUND(AVG(BASICPAY+SUDANG),-1) > 1500000
+                    THEN 'B등급' 
+                ELSE 'C등급' 
+           END "등급" 
+FROM TBL_INSA
+GROUP BY BUSEO
+ORDER BY 등급;
 
-86. 지역(CITY)별로 급여(기본급+수당) 1순위 직원만 조회.
+--95. 기본급+수당이 가장 많은 사람의 이름, 기본급+수당 조회.
+--    MAX() 함수, 하위 쿼리 이용.
+SELECT MAX(BASICPAY + SUDANG) "급여최대값"
+FROM TBL_INSA;
 
-87. 부서별 인원수가 가장 많은 부서 및 인원수 조회.
-
-88. 지역(CITY)별 인원수가 가장 많은 지역 및 인원수 조회.
-
-89. 지역(CITY)별 평균 급여(BASICPAY + SUDANG)가
-    가장 높은 지역 및 평균급여 조회.
-
-90. 여자 인원수가 가장 많은 부서 및 인원수 조회.
-
-91. 지역별 인원수 순위 조회.
-
-92. 지역별 인원수 순위 조회하되 5순위까지만 출력.
-
-93. 이름, 부서, 출신도, 기본급, 수당, 기본급+수당, 세금, 실수령액 조회
-    단, 세금: 총급여가 250만원 이상이면 2%, 200만원 이상이면 1%, 나머지 0.
-    실수령액: 총급여-세금
-
-94. 부서별 평균 급여를 조회하되, A, B, C 등급으로 나눠서 출력.
-    200만원 초과 - A등급
-    150~200만원  - B등급
-    150만원 미만 - C등급
-
-95. 기본급+수당이 가장 많은 사람의 이름, 기본급+수당 조회.
-    MAX() 함수, 하위 쿼리 이용.
+SELECT NAME,BASICPAY + SUDANG "급여"
+FROM TBL_INSA
+WHERE BASICPAY + SUDANG = (SELECT MAX(BASICPAY + SUDANG)
+                            FROM TBL_INSA);
 
 
 ----------------------------------------------------------------------------
