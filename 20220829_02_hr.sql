@@ -354,11 +354,11 @@ CREATE TABLE LOCATIONS1
 
 -- 시퀸스 생성
 CREATE SEQUENCE LOCATIONS1_SEQ       -- 기본적인 시퀀스 생성 구조
-START WITH 1000          -- 시작값
-INCREMENT BY 100         -- 증가값
-MINVALUE 1               -- 최소값
-MAXVALUE 9900            -- 최대값
-NOCACHE;                 -- 캐시 사용 안함(없음)
+START WITH 1000                      -- 시작값
+INCREMENT BY 100                     -- 증가값
+MINVALUE 1                           -- 최소값
+MAXVALUE 9900                        -- 최대값
+NOCACHE;                             -- 캐시 사용 안함(없음)
 -- Sequence LOCATIONS1_SEQ이(가) 생성되었습니다.
 
 -- 원본 데이터 조회

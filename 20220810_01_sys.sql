@@ -296,10 +296,42 @@ ALTER USER SCOTT TEMPORARY TABLESPACE TEMP;
 
 
 
+--------------------------------------------------------------------------------
+-- NO1 계정을 활용할 수 있는 설정
+
+--○ 사용자 계정 생성(no1 / hello)
+--CREATE USER no1 IDENTIFIED BY hello;
+--==>> User NO1이(가) 생성되었습니다
+
+--○ 사용자 계정에 권한(롤) 부여
+--GRANT CONNECT,RESOURCE,UNLIMITED TABLESPACE TO no1;
+--==>> Grant을(를) 성공했습니다.
+
+--○ NO1 사용자 계정의 기본 테이블스페이스를 USER 로 지정(설정)
+--ALTER USER no1 DEFAULT TABLESPACE USERS;
+--==>> User NO1이(가) 변경되었습니다.
+
+--○ NO1 사용자 계정의 임시 테이블스페이스를 TEMP 로 지정(설정)
+--ALTER USER no1 TEMPORARY TABLESPACE TEMP;
+--==>> User NO1이(가) 변경되었습니다.
 
 
+--------------------------------------------------------------------------------
+-- LEVI 계정을 활용할 수 있는 설정
 
+--○ 사용자 계정 생성(levi / hello)
+--CREATE USER levi IDENTIFIED BY hello;
+--==>> User LEVI이(가) 생성되었습니다
 
+--○ 사용자 계정에 권한(롤) 부여
+--GRANT CONNECT,RESOURCE,UNLIMITED TABLESPACE TO levi;
+--==>> Grant을(를) 성공했습니다.
 
+--○ NO1 사용자 계정의 기본 테이블스페이스를 USER 로 지정(설정)
+--ALTER USER levi DEFAULT TABLESPACE USERS;
+--==>> User LEVI이(가) 변경되었습니다.
 
+--○ NO1 사용자 계정의 임시 테이블스페이스를 TEMP 로 지정(설정)
+--ALTER USER levi TEMPORARY TABLESPACE TEMP;
+--==>> User LEVI이(가) 변경되었습니다.
 

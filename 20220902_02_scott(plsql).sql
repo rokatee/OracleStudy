@@ -18,6 +18,7 @@ FROM DUAL;
 --    : 입고번호, 상품코드, 입고일자, 입고수량, 입고단가
 --   프로시저 명 : PRC_입고_INSERT(상품코드, 입고수량, 입고단가)
 DESC TBL_상품;
+DESC TBL_입고;
 
 CREATE OR REPLACE PROCEDURE PRC_입고_INSERT
 (
