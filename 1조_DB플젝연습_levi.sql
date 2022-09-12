@@ -138,9 +138,9 @@ CREATE TABLE TBL_OCLASS
 , START_DATE    DATE        CONSTRAINT OCLASS_START_DATE_NN NOT NULL                            -- 과목 시작일
 , END_DATE      DATE        CONSTRAINT OCLASS_END_DATE_NN NOT NULL                              -- 과목 종료일        
 , INSERT_DATE   DATE        DEFAULT SYSDATE    CONSTRAINT OCLASS_INSERT_DATE_NN NOT NULL        -- 개설일자
-, ABLE_CODE     NUMBER                                                                          -- 강의 가능 여부 코드 (FK : TBL_ABLE)
+, ABLE_CODE     NUMBER      CONSTRAINT OCLASS_ABLE_CODE_NN NOT NULL                             -- 강의 가능 여부 코드 (FK : TBL_ABLE)
 , OCOURSE_CODE  NUMBER      CONSTRAINT OCLASS_OCOURSE_CODE_NN NOT NULL                          -- 개설과정 코드 (FK : TBL_OCOURSE)
-, BOOK_CODE     NUMBER                                                                          -- 교재 코드 (FK : TBL_TEXTBOOK)
+, BOOK_CODE     NUMBER      CONSTRAINT OCLASS_BOOK_CODE_NN NOT NULL                             -- 교재 코드 (FK : TBL_TEXTBOOK)
 , CONSTRAINT OCLASS_OCLASS_CODE_PK PRIMARY KEY(OCLASS_CODE)
 );
 

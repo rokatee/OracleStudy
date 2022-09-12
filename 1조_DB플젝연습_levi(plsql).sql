@@ -280,9 +280,10 @@ SELECT *
 FROM TBL_TEXTBOOK;
 
 --EXEC PRC_TEXTBOOK_INSERT(BOOK_NAME, BOOK_PUB);
-EXEC PRC_TEXTBOOK_INSERT('Java', '홍대');   -- 중복 데이터 테스트
-EXEC PRC_TEXTBOOK_INSERT('DB', '쌍용');     -- 멀쩡한 데이터
-EXEC PRC_TEXTBOOK_INSERT('JS', NULL);       -- 멀쩡한 데이터
+EXEC PRC_TEXTBOOK_INSERT('Java', '홍대');          -- 중복 데이터 테스트
+EXEC PRC_TEXTBOOK_INSERT('DB', '쌍용');            -- 멀쩡한 데이터
+EXEC PRC_TEXTBOOK_INSERT('JS', NULL);              -- 멀쩡한 데이터
+EXEC PRC_TEXTBOOK_INSERT('교재 없음', NULL);       -- 멀쩡한 데이터
 
 CREATE OR REPLACE PROCEDURE PRC_TEXTBOOK_INSERT
 (
@@ -457,7 +458,11 @@ END;
 --------------------------------------------------------------------------------
 --개설과목[개설과정(강의실, 과정), 강의가능(과목, 교수)]
 ---------------------
--- PRC_OCLASS_INSERT  --> no data found 가 자꾸 뜨네 왜지?
+-- PRC_OCLASS_INSERT  --> no data found 가 자꾸 뜨네 왜지? 
+                      --  데이터입력이라 INSERT_DATE(개설일)가 없는데, 
+                      --  시작일과 종료일을 INSERT_DATE(개설일)와 비교해서 그런거임
+                      --  개설일 디폴트값이 SYSDATE이므로 
+                      --  INSERT프로시저에선 시작일과 종료일을 SYSDATE와 비교하면 됨
 SELECT *
 FROM TBL_OCLASS;
 -- 1111, 2112, 3-1-
@@ -480,12 +485,13 @@ EXEC PRC_OCLASS_INSERT(TO_DATE('2022-12-25', 'YYYY-MM-DD'), TO_DATE('2021-01-01'
 --> 개설일자보다 빠른 종료일
 EXEC PRC_OCLASS_INSERT(TO_DATE('2022-12-25', 'YYYY-MM-DD'), TO_DATE('2022-11-01', 'YYYY-MM-DD'), 2, 1, 1);   
 --> 시작일보다 빠른 종료일
-EXEC PRC_OCLASS_INSERT(TO_DATE('2022-06-27', 'YYYY-MM-DD'), TO_DATE('2023-01-16', 'YYYY-MM-DD'), 2, 1, 3);   
+EXEC PRC_OCLASS_INSERT(TO_DATE('2022-12-27', 'YYYY-MM-DD'), TO_DATE('2023-01-16', 'YYYY-MM-DD'), 3, 1, 100);   
 --> 없는 교재 데이터
-EXEC PRC_OCLASS_INSERT(TO_DATE('2022-06-27', 'YYYY-MM-DD'), TO_DATE('2023-01-16', 'YYYY-MM-DD'), 4, 1, 1);   
+EXEC PRC_OCLASS_INSERT(TO_DATE('2022-12-27', 'YYYY-MM-DD'), TO_DATE('2023-01-16', 'YYYY-MM-DD'), 100, 1, 1);   
 --> 강의 가능한 데이터가 없는 경우
 EXEC PRC_OCLASS_INSERT(TO_DATE('2022-12-25', 'YYYY-MM-DD'), TO_DATE('2023-01-01', 'YYYY-MM-DD'), 1, 1, 1);   
---> 이미 개설된 과목(중복된 강의 가능 여부 코드)
+EXEC PRC_OCLASS_INSERT(TO_DATE('2022-12-25', 'YYYY-MM-DD'), TO_DATE('2023-01-01', 'YYYY-MM-DD'), 2, 1, 1);   
+--> 이미 개설된 과목(중복된 강의 가능 여부 코드) --> 1번 강의는 못거름, 왜지?
 EXEC PRC_OCLASS_INSERT(TO_DATE('2022-12-25', 'YYYY-MM-DD'), TO_DATE('2023-01-01', 'YYYY-MM-DD'), 3, 1, 2);   
 --> 멀쩡한 데이터
 EXEC PRC_OCLASS_INSERT(TO_DATE('2022-12-25', 'YYYY-MM-DD'), TO_DATE('2023-01-01', 'YYYY-MM-DD'), NULL, 1, 2);   
@@ -503,38 +509,33 @@ CREATE OR REPLACE PROCEDURE PRC_OCLASS_INSERT
 )
 IS
     V_OCLASS_CODE   TBL_OCLASS.OCLASS_CODE%TYPE;
-    V_INSERT_DATE   TBL_OCLASS.INSERT_DATE%TYPE;
 
     V_FLAT          NUMBER := 1;
     WRONG_DATE      EXCEPTION;
---    NO_PRO_FOUND    EXCEPTION;
---    NO_BOOK_FOUND   EXCEPTION;
+    NO_PRO_FOUND    EXCEPTION;
+    NO_BOOK_FOUND   EXCEPTION;
     OPENED_CLASS    EXCEPTION;
 BEGIN
-
-    SELECT INSERT_DATE INTO V_INSERT_DATE
-    FROM TBL_OCLASS
-    WHERE OCLASS_CODE = V_OCLASS_CODE;
     
-    IF (V_INSERT_DATE > V_START_DATE OR V_START_DATE > V_END_DATE)
+    IF (SYSDATE > V_START_DATE OR V_START_DATE > V_END_DATE)
         THEN RAISE WRONG_DATE;
     END IF;
     
---    SELECT COUNT(*) INTO V_FLAT
---    FROM TBL_TEXTBOOK
---    WHERE BOOK_CODE = V_BOOK_CODE;
---    
---    IF (V_FLAT = 0)
---        THEN RAISE NO_BOOK_FOUND;
---    END IF;    
---    
---    SELECT COUNT(*) INTO V_FLAT
---    FROM TBL_ABLE
---    WHERE ABLE_CODE = V_ABLE_CODE;
---    
---    IF (V_FLAT = 0)
---        THEN RAISE NO_PRO_FOUND;
---    END IF;
+    SELECT COUNT(*) INTO V_FLAT
+    FROM TBL_TEXTBOOK
+    WHERE BOOK_CODE = V_BOOK_CODE;
+    
+    IF (V_FLAT = 0)
+        THEN RAISE NO_BOOK_FOUND;
+    END IF;    
+    
+    SELECT COUNT(*) INTO V_FLAT
+    FROM TBL_ABLE
+    WHERE ABLE_CODE = V_ABLE_CODE;
+    
+    IF (V_FLAT = 0)
+        THEN RAISE NO_PRO_FOUND;
+    END IF;
 
     SELECT COUNT(*) INTO V_FLAT
     FROM TBL_OCLASS
@@ -548,10 +549,10 @@ BEGIN
     VALUES(TBL_OCLASS_SEQ.NEXTVAL, V_START_DATE, V_END_DATE, V_ABLE_CODE, V_OCOURSE_CODE, V_BOOK_CODE);
             
     EXCEPTION
-----        WHEN NO_BOOK_FOUND
-----            THEN RAISE_APPLICATION_ERROR(-20012, '배정할 교재가 없음');
-----        WHEN NO_PRO_FOUND
-----            THEN RAISE_APPLICATION_ERROR(-20013, '배정할 교수가 없음');
+        WHEN NO_BOOK_FOUND
+            THEN RAISE_APPLICATION_ERROR(-20012, '배정할 교재가 없음');
+        WHEN NO_PRO_FOUND
+            THEN RAISE_APPLICATION_ERROR(-20013, '배정할 교수가 없음');
         WHEN OPENED_CLASS
             THEN RAISE_APPLICATION_ERROR(-20014, '이미 개설된 과목입니다.');
         WHEN WRONG_DATE
@@ -630,21 +631,21 @@ BEGIN
         THEN RAISE WRONG_DATE;
     END IF;
 
---    SELECT COUNT(*) INTO V_FLAT
---    FROM TBL_TEXTBOOK
---    WHERE BOOK_CODE = V_BOOK_CODE;
---    
---    IF (V_FLAT = 0)
---        THEN RAISE NO_BOOK_FOUND;
---    END IF;    
---    
---    SELECT COUNT(*) INTO V_FLAT
---    FROM TBL_ABLE
---    WHERE ABLE_CODE = V_ABLE_CODE;
---    
---    IF (V_FLAT = 0)
---        THEN RAISE NO_PRO_FOUND;
---    END IF;
+    SELECT COUNT(*) INTO V_FLAT
+    FROM TBL_TEXTBOOK
+    WHERE BOOK_CODE = V_BOOK_CODE;
+    
+    IF (V_FLAT = 0)
+        THEN RAISE NO_BOOK_FOUND;
+    END IF;    
+    
+    SELECT COUNT(*) INTO V_FLAT
+    FROM TBL_ABLE
+    WHERE ABLE_CODE = V_ABLE_CODE;
+    
+    IF (V_FLAT = 0)
+        THEN RAISE NO_PRO_FOUND;
+    END IF;
     
     SELECT COUNT(*) INTO V_FLAT
     FROM TBL_OCLASS
@@ -664,10 +665,10 @@ BEGIN
     EXCEPTION
         WHEN NO_DATA_FOUND
             THEN RAISE_APPLICATION_ERROR(-20002, '데이터 없음');
---        WHEN NO_BOOK_FOUND
---            THEN RAISE_APPLICATION_ERROR(-20012, '배정할 교재가 없음');
---        WHEN NO_PRO_FOUND
---            THEN RAISE_APPLICATION_ERROR(-20013, '배정할 교수가 없음');
+        WHEN NO_BOOK_FOUND
+            THEN RAISE_APPLICATION_ERROR(-20012, '배정할 교재가 없음');
+        WHEN NO_PRO_FOUND
+            THEN RAISE_APPLICATION_ERROR(-20013, '배정할 교수가 없음');
         WHEN OPENED_CLASS
             THEN RAISE_APPLICATION_ERROR(-20014, '이미 개설된 과목입니다.');
         WHEN WRONG_DATE
