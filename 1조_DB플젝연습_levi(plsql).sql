@@ -279,10 +279,9 @@ SELECT *
 FROM TBL_TEXTBOOK;
 
 --EXEC PRC_TEXTBOOK_INSERT(BOOK_NAME, BOOK_PUB);
-EXEC PRC_TEXTBOOK_INSERT('Java', '홍대');          -- 중복 데이터 테스트
-EXEC PRC_TEXTBOOK_INSERT('DB', '쌍용');            -- 멀쩡한 데이터
-EXEC PRC_TEXTBOOK_INSERT('JS', NULL);              -- 멀쩡한 데이터
 EXEC PRC_TEXTBOOK_INSERT('교재 없음', NULL);       -- 멀쩡한 데이터
+EXEC PRC_TEXTBOOK_INSERT('DB', '쌍용');            -- 멀쩡한 데이터
+EXEC PRC_TEXTBOOK_INSERT('DB', '쌍용');            -- 중복 데이터 테스트
 
 CREATE OR REPLACE PROCEDURE PRC_TEXTBOOK_INSERT
 (
@@ -311,10 +310,10 @@ BEGIN
     EXCEPTION
         WHEN DUPLICATE_DATA
             THEN RAISE_APPLICATION_ERROR(-20001, '데이터 중복');
---        WHEN OTHERS
---            THEN ROLLBACK;
---            
---    COMMIT;
+        WHEN OTHERS
+            THEN ROLLBACK;
+            
+    COMMIT;
     
 END;
 
@@ -331,7 +330,7 @@ FROM TBL_TEXTBOOK;
 
 --EXEC PRC_TEXTBOOK_UPDATE(BOOK_CODE, BOOK_NAME, BOOK_PUB);
 EXEC PRC_TEXTBOOK_UPDATE(100, '없는 데이터', '없는 데이터');   -- 없는 데이터
-EXEC PRC_TEXTBOOK_UPDATE(7, '알고리즘', '쌍용');               -- 멀쩡한 데이터
+EXEC PRC_TEXTBOOK_UPDATE(3, '알고리즘', '쌍용');               -- 멀쩡한 데이터
 
 CREATE OR REPLACE PROCEDURE PRC_TEXTBOOK_UPDATE
 (
@@ -362,9 +361,9 @@ BEGIN
     EXCEPTION
         WHEN NO_DATA_FOUND
             THEN RAISE_APPLICATION_ERROR(-20002, '데이터 없음');
---        WHEN OTHERS
---            THEN ROLLBACK;
---    COMMIT;
+        WHEN OTHERS
+            THEN ROLLBACK;
+    COMMIT;
 END;
 
 ----------------------
@@ -374,7 +373,7 @@ FROM TBL_TEXTBOOK;
 
 --EXEC PRC_TEXTBOOK_DELETE(BOOK_CODE);
 EXEC PRC_TEXTBOOK_DELETE(100);   -- 없는데이터
-EXEC PRC_TEXTBOOK_DELETE(2);     -- 사용 중인 데이터 삭제
+EXEC PRC_TEXTBOOK_DELETE(6);     -- 사용 중인 데이터 삭제
 EXEC PRC_TEXTBOOK_DELETE(3);     -- 삭제 가능한 데이터 삭제
 
 CREATE OR REPLACE PROCEDURE PRC_TEXTBOOK_DELETE
@@ -416,9 +415,9 @@ BEGIN
             THEN RAISE_APPLICATION_ERROR(-20002, '데이터 없음');
         WHEN USING_IN_OCLASS
             THEN RAISE_APPLICATION_ERROR(-20009, '이미 개설 과목에서 사용 중인 교재입니다');
---        WHEN OTHERS
---            THEN ROLLBACK;
---    COMMIT;
+        WHEN OTHERS
+            THEN ROLLBACK;
+    COMMIT;
 END;
 
 --------------------------------------------------------------------------------
@@ -438,33 +437,8 @@ END;
 --------------------------------------------------------------------------------
 --강의가능(과목, 교수)
 -- PRC_ABLE_INSERT
-SELECT *
-FROM TBL_ABLE;
-
-SELECT *
-FROM TBL_PROFESSOR;
-
-SELECT *
-FROM TBL_CLASS;
-
--- EXEC PRC_ABLE_INSERT()
-EXEC PRC_ABLE_INSERT(1, 'pro3');
 
 
-CREATE OR REPLACE PROCEDURE PRC_ABLE_INSERT
-( V_CLASS_CODE   IN TBL_ABLE.CLASS_CODE%TYPE 
-, V_PRO_ID      IN  TBL_ABLE.PRO_ID%TYPE
-)
-IS
-    V_ABLE_CODE     TBL_ABLE.ABLE_CODE%TYPE;
-BEGIN
-
-    INSERT INTO TBL_ABLE(ABLE_CODE, CLASS_CODE, PRO_ID)
-    VALUES(TBL_ABLE_SEQ.NEXTVAL, V_CLASS_CODE, V_PRO_ID);
-    
---    COMMIT;
-
-END;
 ---------------------
 -- PRC_ABLE_UPDATE
 
@@ -486,7 +460,8 @@ END;
                       --  개설일 디폴트값이 SYSDATE이므로 
                       --  INSERT프로시저에선 시작일과 종료일을 SYSDATE와 비교하면 됨
                       
-                      -- 이미 개설된 과목(중복된 강의 가능 여부 코드) --> 1번 강의는 못거름, 왜지? --> V_FLAT이 1일 때 입력
+                      --> 이미 개설된 과목(중복된 강의 가능 여부 코드) 
+                      --  1번 강의는 못거름, 왜지? --> V_FLAT이 1일 때 입력
 SELECT *
 FROM TBL_OCLASS;
 -- 1111, 2112, 3-1-
@@ -497,6 +472,9 @@ FROM TBL_ABLE;
 
 SELECT *
 FROM TBL_OCOURSE;
+
+INSERT INTO TBL_OCOURSE(OCOURSE_CODE, START_DATE, END_DATE, INSERT_DATE, COURSE_CODE, ROOM_CODE)
+VALUES(2, TO_DATE('2022-09-14', 'YYYY-MM-DD'), TO_DATE('2023-01-16', 'YYYY-MM-DD'), TO_DATE('2022-09-14', 'YYYY-MM-DD'), 1, 1);
 --1
 SELECT *
 FROM TBL_TEXTBOOK;
@@ -513,11 +491,11 @@ EXEC PRC_OCLASS_INSERT(TO_DATE('2022-12-25', 'YYYY-MM-DD'), TO_DATE('2022-08-01'
 --> 개설일자보다 빠른 종료일
 EXEC PRC_OCLASS_INSERT(TO_DATE('2022-12-25', 'YYYY-MM-DD'), TO_DATE('2022-11-01', 'YYYY-MM-DD'), 2, 1, 1);   
 --> 시작일보다 빠른 종료일
-EXEC PRC_OCLASS_INSERT(TO_DATE('2022-12-27', 'YYYY-MM-DD'), TO_DATE('2023-01-16', 'YYYY-MM-DD'), 3, 1, 100);   
+EXEC PRC_OCLASS_INSERT(TO_DATE('2022-09-14', 'YYYY-MM-DD'), TO_DATE('2023-01-16', 'YYYY-MM-DD'), 3, 1, 100);   
 --> 없는 교재 데이터
 EXEC PRC_OCLASS_INSERT(TO_DATE('2022-12-27', 'YYYY-MM-DD'), TO_DATE('2023-01-16', 'YYYY-MM-DD'), 100, 1, 1);   
 --> 강의 가능한 데이터가 없는 경우
-220627, 230116
+--220627, 230116
 EXEC PRC_OCLASS_INSERT(TO_DATE('2022-12-25', 'YYYY-MM-DD'), TO_DATE('2022-12-31', 'YYYY-MM-DD'), 3, 1, 5);   
 --> 개설과목이 있는 A교수를 배정받은 날짜와 같은 날짜로 넣기
 EXEC PRC_OCLASS_INSERT(TO_DATE('2022-12-27', 'YYYY-MM-DD'), TO_DATE('2022-12-30', 'YYYY-MM-DD'), 3, 1, 5);   
@@ -556,6 +534,7 @@ BEGIN
     SELECT START_DATE, END_DATE INTO V_START_DATE1, V_END_DATE1
     FROM TBL_OCOURSE
     WHERE OCOURSE_CODE = V_OCOURSE_CODE;
+    
     -- 과정 기간보다 과목 기간이 짧아지지 않도록
     IF( V_START_DATE < V_START_DATE1 OR V_END_DATE > V_END_DATE1 )
         THEN RAISE WRONG_DATE1;
@@ -563,7 +542,7 @@ BEGIN
     
     -- 개설일의 기본값이 SYSDATE인데, 
     -- 그보다 시작일이 빠르지 못하도록, 시작일보다 종료일이 빠르지 못하도록 
-    IF (SYSDATE > V_START_DATE OR V_START_DATE > V_END_DATE)
+    IF (TO_DATE(SYSDATE, 'YYYY-MM-DD') > V_START_DATE OR V_START_DATE > V_END_DATE)
         THEN RAISE WRONG_DATE;
     END IF;
     
@@ -602,7 +581,7 @@ BEGIN
     INSERT INTO TBL_OCLASS(OCLASS_CODE, START_DATE, END_DATE, ABLE_CODE, OCOURSE_CODE, BOOK_CODE)
     VALUES(TBL_OCLASS_SEQ.NEXTVAL, V_START_DATE, V_END_DATE, V_ABLE_CODE, V_OCOURSE_CODE, V_BOOK_CODE);
     
-    -- 예외처리        
+    -- 예외처리
     EXCEPTION
         WHEN NO_BOOK_FOUND
             THEN RAISE_APPLICATION_ERROR(-20012, '배정할 교재가 없음');
@@ -614,9 +593,9 @@ BEGIN
             THEN RAISE_APPLICATION_ERROR(-20015, '개설된 과정보다 넓은 범위의 과목을 개설할 수 없습니다.');
         WHEN WRONG_DATE
             THEN RAISE_APPLICATION_ERROR(-20015, '잘못된 날짜 입력.');
-----        WHEN OTHERS
-----            THEN ROLLBACK;
-----    COMMIT;
+        WHEN OTHERS
+            THEN ROLLBACK;
+    COMMIT;
 
 END;
 
@@ -771,9 +750,9 @@ BEGIN
             THEN RAISE_APPLICATION_ERROR(-20015, '개설된 과정보다 넓은 범위의 과목을 개설할 수 없습니다.');
         WHEN WRONG_DATE
             THEN RAISE_APPLICATION_ERROR(-20015, '잘못된 날짜 입력.');
---        WHEN OTHERS
---            THEN ROLLBACK;
---    COMMIT;
+        WHEN OTHERS
+            THEN ROLLBACK;
+    COMMIT;
     
 END;
 
@@ -789,10 +768,9 @@ FROM TBL_POINT;
 
 --EXEC PRC_OCLASS_DELETE(OCLASS_CODE)
 EXEC PRC_OCLASS_DELETE(100);   -- 없는데이터
-EXEC PRC_OCLASS_DELETE(2);     -- 배점이 부여된 데이터 삭제
 EXEC PRC_OCLASS_DELETE(3);     -- 성적이 부여된 데이터 삭제
 EXEC PRC_OCLASS_DELETE(18);    -- 배점이 부여된 개설과목
-EXEC PRC_OCLASS_DELETE(19);    -- 삭제 가능한 데이터 삭제
+EXEC PRC_OCLASS_DELETE(20);    -- 삭제 가능한 데이터 삭제
 
 CREATE OR REPLACE PROCEDURE PRC_OCLASS_DELETE
 (
@@ -832,9 +810,9 @@ BEGIN
             THEN RAISE_APPLICATION_ERROR(-20002, '데이터 없음');
          WHEN GRADE_AWARDED
             THEN RAISE_APPLICATION_ERROR(-20010, '이미 성적이 부여된 과목입니다');
---        WHEN OTHERS
---            THEN ROLLBACK;
---    COMMIT;
+        WHEN OTHERS
+            THEN ROLLBACK;
+    COMMIT;
     
 END;
 
@@ -853,9 +831,10 @@ BEGIN
 END;
 
 --DROP TRIGGER TRG_OCLASS_DELETE;
+
+
 --------------------------------------------------------------------------------
 --배점{개설과목[개설과정(강의실, 과정), 강의가능(과목, 교수)]}
-
 ----------------------
 --PRC_POINT_INSERT   --> 배점 합이 0이 아니라면을 넣은 이유
                      --  배점을 나중에 부여하기 위해 합이 0인 경우도 데이터가 들어가도록 
@@ -868,7 +847,7 @@ SELECT *
 FROM TBL_OCLASS;
 
 --EXEC PRC_POINT_INSERT(V_POINT_ATTEND, V_POINT_PRACTICE, V_POINT_WRITE, V_OCLASS_CODE);
-EXEC PRC_POINT_INSERT(100);   -- 없는데이터 
+EXEC PRC_POINT_INSERT(0,0,0,100);         -- 없는데이터 
 EXEC PRC_POINT_INSERT(20, 20, 60, 1);     -- 중복데이터 
 EXEC PRC_POINT_INSERT(-1, 60, 20, 2);     -- 출석 음수
 EXEC PRC_POINT_INSERT(20, -1, 60, 2);     -- 실기 음수 
@@ -876,7 +855,7 @@ EXEC PRC_POINT_INSERT(20, 60, -1, 2);     -- 필기 음수
 EXEC PRC_POINT_INSERT(100, 100, 100, 3);  -- 총합 100 이상 
 EXEC PRC_POINT_INSERT(1, 1, 1, 2);        -- 총합 100 이하 
 EXEC PRC_POINT_INSERT(20, 20, 60, 2);     -- 멀쩡한 데이터 
-EXEC PRC_POINT_INSERT(0, 0, 0, 18);        -- 멀쩡한 데이터
+EXEC PRC_POINT_INSERT(0, 0, 0, 18);       -- 0이 들어가는 멀쩡한 데이터
 
 CREATE OR REPLACE PROCEDURE PRC_POINT_INSERT
 (
@@ -941,9 +920,9 @@ BEGIN
             THEN RAISE_APPLICATION_ERROR(-20002, '데이터 없음');
         WHEN POINT_AWARDED
             THEN RAISE_APPLICATION_ERROR(-20008, '이미 배점이 부여된 과목입니다');
---        WHEN OTHERS
---            THEN ROLLBACK;
---    COMMIT;
+        WHEN OTHERS
+            THEN ROLLBACK;
+    COMMIT;
     
 END;
 
@@ -1012,9 +991,9 @@ BEGIN
             THEN RAISE_APPLICATION_ERROR(-20004, '총합 100점이 되어야 합니다');
         WHEN NO_DATA_FOUND
             THEN RAISE_APPLICATION_ERROR(-20002, '데이터 없음');
---        WHEN OTHERS
---            THEN ROLLBACK;
---    COMMIT;
+        WHEN OTHERS
+            THEN ROLLBACK;
+    COMMIT;
 END;
 
 -------------------
@@ -1023,7 +1002,7 @@ END;
 SELECT *
 FROM TBL_POINT;
 
---EXEC PRC_POINT_DELETE(BOOK_CODE);
+--EXEC PRC_POINT_DELETE(POINT_CODE);
 EXEC PRC_POINT_DELETE(100);   -- 없는데이터
 EXEC PRC_POINT_DELETE(3);     -- 삭제 가능한 데이터 삭제
 
@@ -1053,9 +1032,9 @@ BEGIN
     EXCEPTION
         WHEN NO_DATA_FOUND
             THEN RAISE_APPLICATION_ERROR(-20002, '데이터 없음');
---        WHEN OTHERS
---            THEN ROLLBACK;
---    COMMIT;
+        WHEN OTHERS
+            THEN ROLLBACK;
+    COMMIT;
 END;
 
 
