@@ -590,9 +590,9 @@ BEGIN
         WHEN OPENED_CLASS
             THEN RAISE_APPLICATION_ERROR(-20014, '이미 해당 교수가 해당 기간에 배정된 과목이 있습니다, 다른 교수를 배정해주세요.'); 
         WHEN WRONG_DATE1
-            THEN RAISE_APPLICATION_ERROR(-20015, '개설된 과정보다 넓은 범위의 과목을 개설할 수 없습니다.');
+            THEN RAISE_APPLICATION_ERROR(-20015, '과정기간을 벗어난 과목기간의 설정이 불가능 합니다.');
         WHEN WRONG_DATE
-            THEN RAISE_APPLICATION_ERROR(-20015, '잘못된 날짜 입력.');
+            THEN RAISE_APPLICATION_ERROR(-20016, '잘못된 날짜 입력.');
         WHEN OTHERS
             THEN ROLLBACK;
     COMMIT;
@@ -624,10 +624,6 @@ EXEC PRC_OCLASS_UPDATE(17, TO_DATE('2021-12-25', 'YYYY-MM-DD'), TO_DATE('2023-01
 EXEC PRC_OCLASS_UPDATE(17, TO_DATE('2022-12-25', 'YYYY-MM-DD'), TO_DATE('2023-05-01', 'YYYY-MM-DD'), 1, 1, 1);   
 EXEC PRC_OCLASS_UPDATE(17, TO_DATE('2021-12-25', 'YYYY-MM-DD'), TO_DATE('2023-05-01', 'YYYY-MM-DD'), 1, 1, 1);   
 --> 개설과정보다 더 큰 범위의 개설과목 날짜 넣을 때
-EXEC PRC_OCLASS_UPDATE(3, TO_DATE('2022-08-25', 'YYYY-MM-DD'), TO_DATE('2023-01-01', 'YYYY-MM-DD'), 1, 1, 1);   
---> 개설일자보다 빠른 시작일
-EXEC PRC_OCLASS_UPDATE(3, TO_DATE('2022-12-25', 'YYYY-MM-DD'), TO_DATE('2022-08-01', 'YYYY-MM-DD'), 1, 1, 1);   
---> 개설일자보다 빠른 종료일
 EXEC PRC_OCLASS_UPDATE(3, TO_DATE('2022-12-25', 'YYYY-MM-DD'), TO_DATE('2022-11-01', 'YYYY-MM-DD'), 1, 1, 1);   
 --> 시작일보다 빠른 종료일
 EXEC PRC_OCLASS_UPDATE(3, TO_DATE('2022-12-25', 'YYYY-MM-DD'), TO_DATE('2023-01-16', 'YYYY-MM-DD'), 1, 1, 1);   
@@ -747,9 +743,9 @@ BEGIN
         WHEN OPENED_CLASS
             THEN RAISE_APPLICATION_ERROR(-20014, '이미 해당 교수가 같은 기간에 배정된 과목이 있습니다, 다른 교수를 배정해주세요.'); 
         WHEN WRONG_DATE1
-            THEN RAISE_APPLICATION_ERROR(-20015, '개설된 과정보다 넓은 범위의 과목을 개설할 수 없습니다.');
+            THEN RAISE_APPLICATION_ERROR(-20015, '과정기간을 벗어난 과목기간의 설정이 불가능 합니다');
         WHEN WRONG_DATE
-            THEN RAISE_APPLICATION_ERROR(-20015, '잘못된 날짜 입력.');
+            THEN RAISE_APPLICATION_ERROR(-20016, '잘못된 날짜 입력.');
         WHEN OTHERS
             THEN ROLLBACK;
     COMMIT;
