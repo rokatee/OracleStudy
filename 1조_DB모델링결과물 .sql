@@ -1,3 +1,7 @@
+SELECT USER
+FROM DUAL;
+-- NO1
+
 -- 오라클 서버(찬우) SYS에서 계정 생성
 /*
 CREATE USER no1 IDENTIFIED BY hello;
