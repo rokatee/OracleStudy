@@ -269,6 +269,14 @@ REFERENCES TBL_SIGN (SIGN_CODE);
 
 --------------------------------------------------------------------------------
 --SEQUENCE ±¸¹®=====================================================================
+--drop SEQUENCE TBL_POINT_SEQ;
+--drop SEQUENCE TBL_CLASS_SEQ;
+--drop SEQUENCE TBL_ABLE_SEQ;
+--drop SEQUENCE TBL_TEXTBOOK_SEQ;
+--drop SEQUENCE TBL_OCLASS_SEQ;
+--drop SEQUENCE TBL_REASON_SEQ;
+--drop SEQUENCE TBL_SIGN_SEQ;
+--drop SEQUENCE TBL_FAIL_SEQ;
 
 --TBL_ADMIN 
 
