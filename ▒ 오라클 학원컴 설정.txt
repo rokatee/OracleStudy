@@ -1,0 +1,145 @@
+오라클 다운
+SQL 알집 다운
+압축푼 sqldeveloper c드라이브로 이동
+
+도구 > 환경설정 > 코드편집기 
+>>글꼴(나눔고딕, 크기24)&행여백(행번호표시 체크)
+
+테이블 이름은 edu_sys 비번은 java002$
+HR 계정 잠금해제 / 비밀번호 lion으로 변경
+211.238.142
+
+방화벽(원격으로 오라클 접속할때)
+설정 → 업데이트 및 보안 → Windows 보안
+ → 방화벽 및 네트워크 보호 → 고급설정 → 인바운드 규칙
+ → 새규칙 → 포트 → 특정 로컬 포트:1521 → 연결 허용
+ → 전부 체크 → 이름:오라클리스너/설명:1521
+
+
+테이블스페이스 DATAFILE 경로 강의장 PC에 만들기
+(C 드라이브에 TESTDATA 폴더 생성)
+
+
+--○ 현재 오라클 서버에 접속한 자신의 계정 조회
+show user;
+--==>> USER이(가) "SYS"입니다.
+-- sqlplus 상태일 때 사용하는 명령어
+
+--○ 현재 접속한 사용자 계정 확인
+SELECT USER
+FROM DUAL;
+--==>> SYS
+
+
+--○ HR 사용자 계정의 패스워드를 lion 으로 설정
+ALTER USER HR IDENTIFIED BY lion;
+--==>> User HR이(가) 변경되었습니다.
+
+--○ HR 사용자 계정의 잠금을 해제
+ALTER USER HR ACCOUNT UNLOCK;
+--==>> User HR이(가) 변경되었습니다.
+
+--○ TABLESPACE 생성
+
+--※ TABLESPACE 란?
+-->   세그먼트(테이블, 인덱스 등)를 담아두는(저장해두는)
+--    오라클의 논리적인 저장 구조를 의미한다
+
+CREATE TABLESPACE TBS_EDUA              -- 생성하겠다. 테이블스페이스를. TBS_EDUA 라는 이름으로
+DATAFILE 'C:\TESTDATA\TBS_EDUA01.DBF'   -- 물리적 데이터 파일 경로 및 이름
+SIZE 4M                                 -- 사이즈(용량)
+EXTENT MANAGEMENT LOCAL                 -- 오라클 서버가 세그먼트를 알아서 관리
+SEGMENT SPACE MANAGEMENT AUTO;          -- 세그먼트 공간 관리도 오라클 서버가 알아서 관리
+
+--※ 테이블스페이스 생성 구문을 실행하기 전에
+--   해당 경로의 물리적인 디렉터리 생성 필요
+
+--==>> TABLESPACE TBS_EDUA이(가) 생성되었습니다.
+
+
+--○ 생성된 테이블스페이스 조회
+SELECT *
+FROM DBA_TABLESPACES;
+--==>>
+/*
+SYSTEM	    8192	  65536		    1	2147483645	2147483645		65536	ONLINE	PERMANENT	  LOGGING	NO	LOCAL	SYSTEM	NO	MANUAL	DISABLED	NOT APPLY	NO	HOST	NO	
+SYSAUX	    8192	  65536		    1	2147483645	2147483645		65536	ONLINE	PERMANENT	  LOGGING	NO	LOCAL	SYSTEM	NO	AUTO	DISABLED	NOT APPLY	NO	HOST	NO	
+UNDOTBS1	8192	  65536		    1	2147483645	2147483645		65536	ONLINE	    UNDO	  LOGGING	NO	LOCAL	SYSTEM	NO	MANUAL	DISABLED	NOGUARANTEE	NO	HOST	NO	
+TEMP	    8192	1048576	1048576	1	2147483645	         0	  1048576	ONLINE	TEMPORARY	NOLOGGING   NO	LOCAL	UNIFORM	NO	MANUAL	DISABLED	NOT APPLY	NO	HOST	NO	
+USERS	    8192	  65536		    1	2147483645	2147483645		65536	ONLINE	PERMANENT	  LOGGING	NO	LOCAL	SYSTEM	NO	AUTO	DISABLED	NOT APPLY	NO	HOST	NO	
+TBS_EDUA	8192	  65536		    1	2147483645	2147483645		65536	ONLINE	PERMANENT	  LOGGING	NO	LOCAL	SYSTEM	NO	AUTO	DISABLED	NOT APPLY	NO	HOST	NO	
+*/
+
+
+--○ 파일 용량 정보 조회(물리적인 파일 이름 조회)
+SELECT *
+FROM DBA_DATA_FILES
+WHERE FILE_NAME LIKE '%TBS_EDUA%';
+--==>>
+/*
+C:\TESTDATA\TBS_EDUA01.DBF	5	TBS_EDUA	4194304	512	AVAILABLE	5	NO	0	0	0	3145728	384	ONLINE
+*/
+
+--------------------------------------------------------------------------------
+
+-- SCOTT 계정을 활용할 수 있는 설정
+
+--○ 사용자 계정 생성(SCOTT / TIGER)
+create user scott
+identified by tiger;
+--==>> User SCOTT이(가) 생성되었습니다.
+
+--○ 사용자 계정에 권한(롤) 부여
+GRANT CONNECT,RESOURCE,UNLIMITED TABLESPACE TO SCOTT;
+--==>> Grant을(를) 성공했습니다.
+
+--○ SCOTT 사용자 계정의 기본 테이블스페이스를 USER 로 지정(설정)
+ALTER USER SCOTT DEFAULT TABLESPACE USERS;
+--==>> User SCOTT이(가) 변경되었습니다.
+
+--○ SCOTT 사용자 계정의 임시 테이블스페이스를 TEMP 로 지정(설정)
+ALTER USER SCOTT TEMPORARY TABLESPACE TEMP;
+--==>> User SCOTT이(가) 변경되었습니다.
+
+--○ SCOTT 계정에 뷰(VIEW)를 생성할 수 있는 권한 부여
+GRANT CREATE VIEW TO SCOTT;
+--==>> Grant을(를) 성공했습니다.
+
+--------------------------------------------------------------------------------
+
+--○ 오라클 사용자 계정 생성
+CREATE USER kimingyo IDENTIFIED BY java002$
+DEFAULT TABLESPACE TBS_EDUA; 
+--> kimingyo 라는 사용자 계정을 생성하겠다 (만들겠다)
+--  이 사용자 계정의 패스워드는 java002$ 로 하겠다
+--  이 계정을 통해 생성하는 오라클 객체는(세그먼트는)
+--  기본적으로 TBS_EDUA 라는 테이블스페이스에 생성할 수 있도록(만들어지도록)
+--  설정하겠다
+--==>> User KIMINGYO이(가) 생성되었습니다.
+
+--※ 생성된 오라클 사용자 계정(각자 본인의 이름 계정)을 통해 접속 시도
+--   → 접속 불가(실패)
+--   "create session" 권한이 없기 때문에 접속 불가
+
+--○ 생성된 오라클 사용자 계정(각자 본인의 이름 계정)에
+--   오라클 서버 접속이 가능할 수 있도록 create session 권한 부여
+GRANT CREATE SESSION TO kimingyo;
+--==>> Grant을(를) 성공했습니다.
+
+
+--○ 생성된 오라클 사용자 계정(각자 본인의 이름 계정)
+--   테이블 생성이 가능할 수 있도록 CREATE TABLE 권한 부여
+GRANT CREATE TABLE TO kimingyo;
+--==>> Grant을(를) 성공했습니다.
+
+
+--○ 생성된 오라클 사용자 계정(각자 본인의 이름 계정)
+--   테이블스페이스(TBS_EDUA)에서 사용할 수 있는 공간(할당량) 지정
+ALTER USER kimingyo
+QUOTA UNLIMITED ON TBS_EDUA;
+----- --------- ------------
+--할당량 3M          테이블스페이스
+--==>> User KIMINGYO이(가) 변경되었습니다.
+
+
+--------------------------------------------------------------------------------
